@@ -1,0 +1,73 @@
+version: 2
+
+project_name: qualithm
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: qualithm
+    main: ./cmd/qualithm
+    binary: qualithm
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: qualithm
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: desc
+  use: github
+  format: "- {{ .Message }}"
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - Merge pull request
+      - Merge branch
+      - "^Merge .* into main"
+      - "^Merge .* into test"
+      - "^Merge .* into development"
+
+release:
+  github:
+    owner: qualithm
+    name: operator-go
+  draft: false
+  prerelease: auto
+  mode: replace
