@@ -134,7 +134,7 @@ jobs:
       - name: Test image health
         run: |
           # Distroless has no shell; invoke the binary directly.
-          docker run --rm ${{ env.IMAGE }}:sha-${GITHUB_SHA::7} -name=ci
+          docker run --rm ${{ env.IMAGE }}:sha-${GITHUB_SHA::7} --help
 
   goreleaser:
     name: GoReleaser
