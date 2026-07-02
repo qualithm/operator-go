@@ -1,4 +1,4 @@
-# operator-go
+# Operator
 
 <!-- TODO: uncomment badges after first publish
 [![CI](https://github.com/qualithm/operator-go/actions/workflows/ci.yaml/badge.svg)](https://github.com/qualithm/operator-go/actions/workflows/ci.yaml)
