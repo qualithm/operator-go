@@ -16,6 +16,11 @@ import (
 // DefaultBaseURL is the production management API base URL.
 const DefaultBaseURL = "https://api.qualithm.com"
 
+// Version is the operator client library version. It is a compile-time
+// constant bumped alongside releases and is reported in the default
+// User-Agent header (see [WithUserAgent]).
+const Version = "0.1.0"
+
 // TokenPrefix is the required prefix for member API tokens (qmt_<selector>.<verifier>).
 const TokenPrefix = "qmt_"
 
@@ -28,11 +33,12 @@ type httpDoer interface {
 // Client talks to the qualithm platform management API with a member API
 // token. Construct it with [New]. A zero Client is not usable.
 type Client struct {
-	baseURL  string
-	token    string
-	http     httpDoer
-	dryRun   bool
-	recorder func(Action)
+	baseURL   string
+	token     string
+	http      httpDoer
+	dryRun    bool
+	recorder  func(Action)
+	userAgent string
 }
 
 // Option configures a [Client].
@@ -69,6 +75,16 @@ func WithRecorder(fn func(Action)) Option {
 	return func(c *Client) { c.recorder = fn }
 }
 
+// WithUserAgent overrides the User-Agent header sent on every request. Empty
+// values are ignored, leaving the default of "operator-go/<Version>".
+func WithUserAgent(ua string) Option {
+	return func(c *Client) {
+		if ua != "" {
+			c.userAgent = ua
+		}
+	}
+}
+
 // New constructs a [Client] authenticating with the given API token.
 func New(token string, opts ...Option) (*Client, error) {
 	if token == "" {
@@ -78,9 +94,10 @@ func New(token string, opts ...Option) (*Client, error) {
 		return nil, fmt.Errorf("operator: API token must start with %q", TokenPrefix)
 	}
 	c := &Client{
-		baseURL: DefaultBaseURL,
-		token:   token,
-		http:    &http.Client{Timeout: 30 * time.Second},
+		baseURL:   DefaultBaseURL,
+		token:     token,
+		http:      &http.Client{Timeout: 30 * time.Second},
+		userAgent: "operator-go/" + Version,
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -134,6 +151,9 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Accept", "application/json")
+	if c.userAgent != "" {
+		req.Header.Set("User-Agent", c.userAgent)
+	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}

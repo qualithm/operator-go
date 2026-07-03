@@ -9,6 +9,12 @@ GOVULNCHECK_VERSION := v1.3.0
 GOSEC_VERSION := v2.26.1
 GOSEC_ARGS ?= -exclude-dir=examples ./...
 
+# Version stamped into the binary. Prefer an exact git tag, then a
+# describe/sha, then the VERSION file for source checkouts without git.
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || cat VERSION)
+VERSION_PKG := github.com/qualithm/operator-go/internal/cli
+LDFLAGS := -s -w -X $(VERSION_PKG).Version=$(VERSION)
+
 .PHONY: help
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -17,7 +23,7 @@ help: ## Show available targets
 .PHONY: build
 build: ## Build the binary into ./bin
 	@mkdir -p bin
-	go build -trimpath -ldflags="-s -w" -o bin/$(BINARY_NAME) ./cmd/$(BINARY_NAME)
+	go build -trimpath -ldflags="$(LDFLAGS)" -o bin/$(BINARY_NAME) ./cmd/$(BINARY_NAME)
 
 .PHONY: run
 run: ## Run the binary
