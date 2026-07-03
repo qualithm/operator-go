@@ -52,7 +52,15 @@ jobs:
           CGO_ENABLED: "0"
         run: |
           mkdir -p dist
-          go build -trimpath -ldflags="-s -w" \
+          # Tag pushes carry the release version in GITHUB_REF_NAME (e.g. v0.1.0);
+          # manual dispatch falls back to a short commit sha.
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="sha-${GITHUB_SHA::7}"
+          fi
+          go build -trimpath \
+            -ldflags="-s -w -X github.com/qualithm/operator-go/internal/cli.Version=${VERSION}" \
             -o dist/${{ env.BINARY_NAME }} \
             ./cmd/${{ env.BINARY_NAME }}
 
@@ -135,8 +143,9 @@ jobs:
 
       - name: Test image health
         run: |
-          # Distroless has no shell; invoke the binary directly.
-          docker run --rm ${{ env.IMAGE }}:sha-${GITHUB_SHA::7} --help
+          # Distroless has no shell; invoke the binary directly. `version` needs
+          # no token or network and exits 0, so it doubles as a smoke test.
+          docker run --rm ${{ env.IMAGE }}:sha-${GITHUB_SHA::7} version
 
   goreleaser:
     name: GoReleaser

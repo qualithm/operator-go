@@ -67,6 +67,8 @@ func Run(ctx context.Context, env Env, args []string) int {
 	case "-h", "--help", "help":
 		_, _ = fmt.Fprint(env.Stdout, usageText)
 		return ExitOK
+	case "version", "--version", "-v":
+		return runVersion(env)
 	case "authority", "authorities":
 		return runAuthority(ctx, env, args[1:])
 	case "enrollment", "enrollments":
@@ -152,7 +154,10 @@ func (c *common) client(env Env) (*operator.Client, int) {
 		_, _ = fmt.Fprintln(env.Stderr, "qualithm: an API token is required (set --token or QUALITHM_API_TOKEN)")
 		return nil, ExitUsage
 	}
-	opts := []operator.Option{operator.WithDryRun(c.dryRun)}
+	opts := []operator.Option{
+		operator.WithDryRun(c.dryRun),
+		operator.WithUserAgent("qualithm/" + Version),
+	}
 	if c.url != "" {
 		opts = append(opts, operator.WithBaseURL(c.url))
 	}

@@ -18,6 +18,7 @@ Resources and verbs:
   device     list | get <id> | create | update <id> | delete <id>
   token      list | create | revoke <id>
   apply      <manifest.yaml>            idempotent device-as-code reconcile
+  version                               print the CLI version
 
 Examples:
   qualithm enrollment create --space spc_123 --label lab-floor-2
