@@ -77,6 +77,7 @@ Global flags are accepted by every verb and must precede positional arguments:
 | `device`     | `list` · `get <id>` · `create` · `update <id>` · `delete <id>` |
 | `token`      | `list` · `create` · `revoke <id>`                              |
 | `apply`      | `<manifest.yaml>` — idempotent device-as-code reconcile        |
+| `version`    | print the CLI version                                          |
 
 ### Examples
 
