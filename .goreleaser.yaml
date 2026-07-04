@@ -64,6 +64,7 @@ changelog:
       - "^Merge .* into main"
       - "^Merge .* into test"
       - "^Merge .* into development"
+      - "^Promote .* → .* \\(\\d+ commits?\\)"
 
 release:
   github:
