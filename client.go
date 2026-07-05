@@ -30,7 +30,7 @@ type httpDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// Client talks to the qualithm platform management API with a member API
+// Client talks to the Qualithm platform management API with a member API
 // token. Construct it with [New]. A zero Client is not usable.
 type Client struct {
 	baseURL   string

@@ -1,6 +1,6 @@
 package cli
 
-const usageText = `qualithm — operator CLI for the qualithm platform management API.
+const usageText = `qualithm — operator CLI for the Qualithm platform management API.
 
 Usage:
   qualithm <resource> <verb> [flags]

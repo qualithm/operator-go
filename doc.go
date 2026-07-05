@@ -1,4 +1,4 @@
-// Package operator is the shared client for the qualithm platform management
+// Package operator is the shared client for the Qualithm platform management
 // API. It authenticates with a member API token (Bearer) and exposes typed
 // methods over the provisioning surface: authorities, enrollments, credentials,
 // devices, and API tokens.
