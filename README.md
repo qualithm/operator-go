@@ -7,7 +7,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/qualithm/operator-go)](https://goreportcard.com/report/github.com/qualithm/operator-go)
 -->
 
-Go client library and operator CLI for the qualithm platform management API. The shared `operator`
+Go client library and operator CLI for the Qualithm platform management API. The shared `operator`
 package authenticates with a member API token and backs both the `qualithm` CLI and the forthcoming
 MCP server, so the two surfaces never diverge.
 
