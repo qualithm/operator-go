@@ -79,7 +79,7 @@ Global flags are accepted by every verb and must precede positional arguments:
 | `apply`      | `<manifest.yaml>` — idempotent device-as-code reconcile        |
 | `version`    | print the CLI version                                          |
 
-### Examples
+### Command examples
 
 ```bash
 # devices
