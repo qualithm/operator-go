@@ -1,11 +1,7 @@
 # Operator
 
-<!-- TODO: uncomment badges after first publish
 [![CI](https://github.com/qualithm/operator-go/actions/workflows/ci.yaml/badge.svg)](https://github.com/qualithm/operator-go/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/qualithm/operator-go/graph/badge.svg)](https://codecov.io/gh/qualithm/operator-go)
-[![Go Reference](https://pkg.go.dev/badge/github.com/qualithm/operator-go.svg)](https://pkg.go.dev/github.com/qualithm/operator-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/qualithm/operator-go)](https://goreportcard.com/report/github.com/qualithm/operator-go)
--->
 
 Go client library and operator CLI for the Qualithm platform management API. The shared `operator`
 package authenticates with a member API token and backs both the `qualithm` CLI and the forthcoming
