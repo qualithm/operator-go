@@ -234,12 +234,6 @@ make lint    # golangci-lint (includes gosec checks via .golangci.yaml)
 
 Daily CI security audit runs both tools in `.github/workflows/audit.yaml`.
 
-## Publishing
-
-Tagged releases are automatically built and published to GHCR when CI passes on `main`. Go modules
-are consumed directly from the Git tag (`vX.Y.Z`) via `go install`; no separate registry publish
-step is required.
-
 ## Minimum Supported Go Version
 
 Go 1.26+.
