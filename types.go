@@ -91,6 +91,18 @@ type Device struct {
 	UpdatedAt string          `json:"updatedAt"`
 }
 
+// Space is a space resource: the zone-scoped container devices live in.
+type Space struct {
+	ID          string          `json:"id"`
+	TeamID      string          `json:"teamId"`
+	Name        string          `json:"name"`
+	Payload     json.RawMessage `json:"payload"`
+	Zone        string          `json:"zone"`
+	DeviceTotal int             `json:"deviceTotal"`
+	CreatedAt   string          `json:"createdAt"`
+	UpdatedAt   string          `json:"updatedAt"`
+}
+
 // APIToken is a member API token (metadata only; the secret is never listed).
 type APIToken struct {
 	ID         string `json:"id"`

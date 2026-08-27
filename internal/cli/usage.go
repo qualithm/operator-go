@@ -16,6 +16,7 @@ Resources and verbs:
   enrollment list | create | revoke <id>
   credential list | mint | cert | rotate | revoke
   device     list | get <id> | create | update <id> | delete <id>
+  space      list | get <id> | create | update <id> | delete <id>
   token      list | create | revoke <id>
   apply      <manifest.yaml>            idempotent device-as-code reconcile
   version                               print the CLI version
