@@ -126,6 +126,13 @@ func (c *Client) mutating(method string) bool {
 // (when out is non-nil). Mutating requests in dry-run mode short-circuit with
 // a [*DryRunError].
 func (c *Client) do(ctx context.Context, method, path string, body, out any) error {
+	return c.doAuth(ctx, method, path, body, out, "")
+}
+
+// doAuth is do with a bearer credential override. The webhook trigger route
+// authenticates with an automation trigger secret rather than the member API
+// token; every other route passes an empty override.
+func (c *Client) doAuth(ctx context.Context, method, path string, body, out any, bearerOverride string) error {
 	if c.mutating(method) {
 		action := Action{Method: method, Path: path, Body: body}
 		if c.recorder != nil {
@@ -149,7 +156,11 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 	if err != nil {
 		return fmt.Errorf("operator: build request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	bearer := c.token
+	if bearerOverride != "" {
+		bearer = bearerOverride
+	}
+	req.Header.Set("Authorization", "Bearer "+bearer)
 	req.Header.Set("Accept", "application/json")
 	if c.userAgent != "" {
 		req.Header.Set("User-Agent", c.userAgent)
