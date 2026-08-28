@@ -77,6 +77,8 @@ func Run(ctx context.Context, env Env, args []string) int {
 		return runCredential(ctx, env, args[1:])
 	case "device", "devices":
 		return runDevice(ctx, env, args[1:])
+	case "space", "spaces":
+		return runSpace(ctx, env, args[1:])
 	case "token", "tokens", "api-token":
 		return runToken(ctx, env, args[1:])
 	case "apply":
