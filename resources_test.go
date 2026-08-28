@@ -228,6 +228,73 @@ func TestListSpaceDevices(t *testing.T) {
 	}
 }
 
+func TestListSpaces(t *testing.T) {
+	var rec recorder
+	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"spc_1","zone":"de-fra-a","deviceTotal":2}],"last":1}}`, &rec)
+	page, err := c.ListSpaces(context.Background(), 0, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.path != "/spaces" || rec.query != "" {
+		t.Fatalf("request = %s?%s", rec.path, rec.query)
+	}
+	if page.Items[0].ID != "spc_1" || page.Items[0].Zone != "de-fra-a" || page.Items[0].DeviceTotal != 2 {
+		t.Fatalf("page = %+v", page)
+	}
+}
+
+func TestGetSpace(t *testing.T) {
+	var rec recorder
+	c := recClient(t, 200, `{"data":{"id":"spc_1","name":"edge","zone":"sg-sin-a"}}`, &rec)
+	got, err := c.GetSpace(context.Background(), "spc_1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.path != "/spaces/spc_1" {
+		t.Fatalf("path = %q", rec.path)
+	}
+	if got.Name != "edge" || got.Zone != "sg-sin-a" {
+		t.Fatalf("space = %+v", got)
+	}
+}
+
+func TestCreateSpace(t *testing.T) {
+	var rec recorder
+	c := recClient(t, 201, `{"data":{"id":"spc_1","zone":"de-fra-a"}}`, &rec)
+	got, err := c.CreateSpace(context.Background(), CreateSpaceInput{Zone: "de-fra-a"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.method != http.MethodPost || rec.path != "/spaces" || rec.body["zone"] != "de-fra-a" {
+		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
+	}
+	if got.ID != "spc_1" {
+		t.Fatalf("space = %+v", got)
+	}
+}
+
+func TestUpdateSpace(t *testing.T) {
+	var rec recorder
+	c := recClient(t, 200, `{"message":"ok"}`, &rec)
+	if err := c.UpdateSpace(context.Background(), "spc_1", "edge"); err != nil {
+		t.Fatal(err)
+	}
+	if rec.method != http.MethodPatch || rec.path != "/spaces/spc_1" || rec.body["name"] != "edge" {
+		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
+	}
+}
+
+func TestDeleteSpace(t *testing.T) {
+	var rec recorder
+	c := recClient(t, 200, `{"message":"ok"}`, &rec)
+	if err := c.DeleteSpace(context.Background(), "spc_1"); err != nil {
+		t.Fatal(err)
+	}
+	if rec.method != http.MethodDelete || rec.path != "/spaces/spc_1" {
+		t.Fatalf("request = %s %s", rec.method, rec.path)
+	}
+}
+
 func TestListAPITokens(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"tok_1","name":"ci"}],"last":1}}`, &rec)

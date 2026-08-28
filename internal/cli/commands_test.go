@@ -447,6 +447,121 @@ func TestDeviceUnknownVerbAndNoVerb(t *testing.T) {
 	}
 }
 
+// --- spaces ------------------------------------------------------------------
+
+func TestSpaceList(t *testing.T) {
+	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
+		if req.URL.Path != "/spaces" {
+			t.Fatalf("path = %s", req.URL.Path)
+		}
+		return jsonResp(200, `{"data":{"current":1,"items":[{"id":"spc_1","name":"edge","zone":"de-fra-a","deviceTotal":3}],"last":1}}`), nil
+	})
+	if code := run(env, "space", "list", "--token", tok); code != ExitOK {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(out.String(), "spc_1") || !strings.Contains(out.String(), "de-fra-a") {
+		t.Fatalf("stdout = %q", out.String())
+	}
+}
+
+func TestSpaceGetTable(t *testing.T) {
+	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
+		if req.URL.Path != "/spaces/spc_1" {
+			t.Fatalf("path = %s", req.URL.Path)
+		}
+		return jsonResp(200, `{"data":{"id":"spc_1","name":"edge","zone":"sg-sin-a","deviceTotal":0}}`), nil
+	})
+	if code := run(env, "space", "get", "spc_1", "--token", tok); code != ExitOK {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(out.String(), "sg-sin-a") {
+		t.Fatalf("stdout = %q", out.String())
+	}
+}
+
+func TestSpaceGetMissingID(t *testing.T) {
+	env, _, errBuf := testEnv(func(*http.Request) (*http.Response, error) { return nil, nil })
+	if code := run(env, "space", "get", "--token", tok); code != ExitUsage {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(errBuf.String(), "space id is required") {
+		t.Fatalf("stderr = %q", errBuf.String())
+	}
+}
+
+func TestSpaceCreateAndMissingZone(t *testing.T) {
+	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
+		if req.Method != http.MethodPost || req.URL.Path != "/spaces" {
+			t.Fatalf("request = %s %s", req.Method, req.URL.Path)
+		}
+		return jsonResp(201, `{"data":{"id":"spc_1","name":"Space abcd1234","zone":"de-fra-a"}}`), nil
+	})
+	if code := run(env, "space", "create", "--zone", "de-fra-a", "--token", tok); code != ExitOK {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(out.String(), "created in zone de-fra-a") {
+		t.Fatalf("stdout = %q", out.String())
+	}
+	env2, _, errBuf := testEnv(func(*http.Request) (*http.Response, error) { return nil, nil })
+	if code := run(env2, "space", "create", "--token", tok); code != ExitUsage {
+		t.Fatalf("missing-zone exit = %d", code)
+	}
+	if !strings.Contains(errBuf.String(), "--zone is required") {
+		t.Fatalf("stderr = %q", errBuf.String())
+	}
+}
+
+func TestSpaceUpdateAndMissingName(t *testing.T) {
+	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
+		if req.Method != http.MethodPatch || req.URL.Path != "/spaces/spc_1" {
+			t.Fatalf("request = %s %s", req.Method, req.URL.Path)
+		}
+		return jsonResp(200, `{"message":"ok"}`), nil
+	})
+	if code := run(env, "space", "update", "spc_1", "--name", "hall", "--token", tok); code != ExitOK {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(out.String(), "renamed to hall") {
+		t.Fatalf("stdout = %q", out.String())
+	}
+	env2, _, errBuf := testEnv(func(*http.Request) (*http.Response, error) { return nil, nil })
+	if code := run(env2, "space", "update", "spc_1", "--token", tok); code != ExitUsage {
+		t.Fatalf("missing-name exit = %d", code)
+	}
+	if !strings.Contains(errBuf.String(), "--name is required") {
+		t.Fatalf("stderr = %q", errBuf.String())
+	}
+}
+
+func TestSpaceDelete(t *testing.T) {
+	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
+		if req.Method != http.MethodDelete {
+			t.Fatalf("method = %s", req.Method)
+		}
+		return jsonResp(200, `{"message":"ok"}`), nil
+	})
+	if code := run(env, "space", "delete", "spc_1", "--token", tok); code != ExitOK {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(out.String(), "spc_1 deleted") {
+		t.Fatalf("stdout = %q", out.String())
+	}
+}
+
+func TestSpaceUnknownVerbAndNoVerb(t *testing.T) {
+	env, _, errBuf := testEnv(func(*http.Request) (*http.Response, error) { return nil, nil })
+	if code := run(env, "space", "frob"); code != ExitUsage {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(errBuf.String(), "unknown space verb") {
+		t.Fatalf("stderr = %q", errBuf.String())
+	}
+	env2, _, _ := testEnv(func(*http.Request) (*http.Response, error) { return nil, nil })
+	if code := run(env2, "space"); code != ExitUsage {
+		t.Fatalf("no-verb exit = %d", code)
+	}
+}
+
 // --- tokens ----------------------------------------------------------------
 
 func TestTokenListCreateRevoke(t *testing.T) {
