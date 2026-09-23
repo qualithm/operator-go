@@ -127,6 +127,10 @@ qualithm apply fleet.yaml             # apply
 | 6    | rate limited (429)     |
 | 7    | api (other non-2xx)    |
 
+403 is not always a missing permission — a paused zone also returns it: `qualithm space create --zone <x>
+returns exit code 3 with `Zone rejects creation in this environment` while the zone is paused. Pick an open
+zone (production opens `de-fra-a` and `sg-sin-a`; lower environments scope to `sg-sin-a`).
+
 ### Using the client library
 
 ```go
