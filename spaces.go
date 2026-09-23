@@ -26,7 +26,10 @@ func (c *Client) GetSpace(ctx context.Context, spaceID string) (Space, error) {
 	return out, err
 }
 
-// CreateSpace creates a space in the given device zone.
+// CreateSpace creates a space in the given device zone. A zone unavailable in
+// the current environment returns HTTP 403 "Zone rejects creation in this
+// environment"; callers should retry with an open zone rather than treat the
+// pause as a fault. See the zones runbook in the Qualithm docs.
 func (c *Client) CreateSpace(ctx context.Context, in CreateSpaceInput) (Space, error) {
 	var out Space
 	err := c.do(ctx, http.MethodPost, "/spaces", in, &out)
