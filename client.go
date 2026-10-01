@@ -16,11 +16,6 @@ import (
 // DefaultBaseURL is the production management API base URL.
 const DefaultBaseURL = "https://api.qualithm.com"
 
-// Version is the operator client library version. It is a compile-time
-// constant bumped alongside releases and is reported in the default
-// User-Agent header (see [WithUserAgent]).
-const Version = "0.1.0"
-
 // TokenPrefix is the required prefix for member API tokens (qmt_<selector>.<verifier>).
 const TokenPrefix = "qmt_"
 
@@ -75,8 +70,11 @@ func WithRecorder(fn func(Action)) Option {
 	return func(c *Client) { c.recorder = fn }
 }
 
-// WithUserAgent overrides the User-Agent header sent on every request. Empty
-// values are ignored, leaving the default of "operator-go/<Version>".
+// WithUserAgent prepends a product token to the User-Agent header sent on every
+// request, e.g. WithUserAgent("qualithm-mcp/1.2.3") sends
+// "qualithm-mcp/1.2.3 operator-go/<Version>", so the API can tell which tool
+// made a call and which library version it used. Empty values are ignored,
+// leaving just "operator-go/<Version>".
 func WithUserAgent(ua string) Option {
 	return func(c *Client) {
 		if ua != "" {
@@ -94,14 +92,14 @@ func New(token string, opts ...Option) (*Client, error) {
 		return nil, fmt.Errorf("operator: API token must start with %q", TokenPrefix)
 	}
 	c := &Client{
-		baseURL:   DefaultBaseURL,
-		token:     token,
-		http:      &http.Client{Timeout: 30 * time.Second},
-		userAgent: "operator-go/" + Version,
+		baseURL: DefaultBaseURL,
+		token:   token,
+		http:    &http.Client{Timeout: 30 * time.Second},
 	}
 	for _, opt := range opts {
 		opt(c)
 	}
+	c.userAgent = strings.TrimSpace(c.userAgent + " operator-go/" + Version)
 	if _, err := url.Parse(c.baseURL); err != nil {
 		return nil, fmt.Errorf("operator: bad base URL %q: %w", c.baseURL, err)
 	}

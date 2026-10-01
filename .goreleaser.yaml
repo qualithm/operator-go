@@ -16,7 +16,7 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X github.com/qualithm/operator-go/internal/cli.Version={{ .Version }}
+      - -X main.version={{ .Version }}
     goos:
       - linux
       - darwin
