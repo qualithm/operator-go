@@ -2,10 +2,8 @@ package cli
 
 import "fmt"
 
-// Version is the CLI binary version. It defaults to "dev" for local builds and
-// is overridden at release time via the linker:
-//
-//	-ldflags "-X github.com/qualithm/operator-go/internal/cli.Version=1.2.3"
+// Version is the CLI binary version. It defaults to "dev"; cmd/qualithm sets it
+// at startup from main.version, which release builds stamp via the linker.
 var Version = "dev"
 
 // runVersion prints the binary version and returns [ExitOK]. It takes no flags

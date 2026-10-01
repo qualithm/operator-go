@@ -12,5 +12,6 @@ import (
 )
 
 func main() {
+	cli.Version = resolvedVersion()
 	os.Exit(cli.Run(context.Background(), cli.DefaultEnv(), os.Args[1:]))
 }
