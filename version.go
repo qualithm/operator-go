@@ -14,10 +14,10 @@ const modulePath = "github.com/qualithm/operator-go"
 // is "dev" when no module version is available — tests, `go run`, and builds
 // from a checkout that isn't at a tag. It is reported in the User-Agent header
 // (see [WithUserAgent]).
-var Version = moduleVersion()
+var Version = moduleVersion(debug.ReadBuildInfo)
 
-func moduleVersion() string {
-	info, ok := debug.ReadBuildInfo()
+func moduleVersion(read func() (*debug.BuildInfo, bool)) string {
+	info, ok := read()
 	if !ok {
 		return "dev"
 	}

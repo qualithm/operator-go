@@ -25,7 +25,10 @@ func TestVersionFrom(t *testing.T) {
 			name: "dependency",
 			info: &debug.BuildInfo{
 				Main: debug.Module{Path: "github.com/qualithm/operator-mcp"},
-				Deps: []*debug.Module{{Path: modulePath, Version: "v0.2.1"}},
+				Deps: []*debug.Module{
+					{Path: "golang.org/x/net", Version: "v0.44.0"},
+					{Path: modulePath, Version: "v0.2.1"},
+				},
 			},
 			want: "0.2.1",
 		},
@@ -53,5 +56,11 @@ func TestVersionFrom(t *testing.T) {
 				t.Errorf("versionFrom() = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestModuleVersionWithoutBuildInfo(t *testing.T) {
+	if got := moduleVersion(func() (*debug.BuildInfo, bool) { return nil, false }); got != "dev" {
+		t.Errorf("moduleVersion() = %q, want %q", got, "dev")
 	}
 }

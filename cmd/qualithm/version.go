@@ -13,6 +13,9 @@ import (
 // release workflow fails if `--version` still reports "dev".
 var version = "dev"
 
+// readBuildInfo is swapped in tests to exercise the fallback.
+var readBuildInfo = debug.ReadBuildInfo
+
 // resolvedVersion returns the stamped version, falling back to the module
 // version Go records in the binary. That covers `go install
 // github.com/qualithm/operator-go/cmd/qualithm@v1.2.3`, which never sees ldflags.
@@ -20,7 +23,7 @@ func resolvedVersion() string {
 	if version != "dev" {
 		return version
 	}
-	if info, ok := debug.ReadBuildInfo(); ok {
+	if info, ok := readBuildInfo(); ok {
 		if v := info.Main.Version; v != "" && v != "(devel)" {
 			return strings.TrimPrefix(v, "v")
 		}
