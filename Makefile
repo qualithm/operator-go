@@ -12,8 +12,7 @@ GOSEC_ARGS ?= -exclude-dir=examples ./...
 # Version stamped into the binary. Prefer an exact git tag, then a
 # describe/sha, then the VERSION file for source checkouts without git.
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || cat VERSION)
-VERSION_PKG := github.com/qualithm/operator-go/internal/cli
-LDFLAGS := -s -w -X $(VERSION_PKG).Version=$(VERSION)
+LDFLAGS := -s -w -X main.version=$(VERSION:v%=%)
 
 .PHONY: help
 help: ## Show available targets

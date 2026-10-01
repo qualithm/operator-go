@@ -82,7 +82,7 @@ func TestUserAgentHeader(t *testing.T) {
 	}
 }
 
-func TestWithUserAgentOverride(t *testing.T) {
+func TestWithUserAgentPrefix(t *testing.T) {
 	var got string
 	c := newTestClient(t, func(req *http.Request) (*http.Response, error) {
 		got = req.Header.Get("User-Agent")
@@ -91,8 +91,8 @@ func TestWithUserAgentOverride(t *testing.T) {
 	if _, err := c.ListDevices(context.Background(), 1, 20); err != nil {
 		t.Fatalf("ListDevices: %v", err)
 	}
-	if got != "qualithm/9.9.9" {
-		t.Fatalf("User-Agent = %q, want %q", got, "qualithm/9.9.9")
+	if want := "qualithm/9.9.9 operator-go/" + Version; got != want {
+		t.Fatalf("User-Agent = %q, want %q", got, want)
 	}
 }
 
