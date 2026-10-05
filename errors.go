@@ -1,6 +1,9 @@
 package operator
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // ClientError is returned when the management API answers with a non-2xx
 // status. It is distinguishable from transport errors so callers can map
@@ -14,6 +17,19 @@ type ClientError struct {
 	StatusCode int
 	// Message is the human-readable message from the API envelope.
 	Message string
+	// Code is the stable error code from the API envelope, when it sent one
+	// (e.g. "backend_unavailable"). Branch on Code, never on Message.
+	Code string
+	// RetryAfter is how long the API asked the caller to wait before retrying,
+	// from its Retry-After header; zero when absent.
+	RetryAfter time.Duration
+}
+
+// Unavailable reports whether the API could not serve the request because a
+// backend was briefly unavailable. The request is safe to retry after
+// RetryAfter.
+func (e *ClientError) Unavailable() bool {
+	return e.StatusCode == 503
 }
 
 // Error implements [error].

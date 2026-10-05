@@ -621,6 +621,7 @@ func TestStatusToExitCodeMapping(t *testing.T) {
 		409: ExitConflict,
 		429: ExitRateLimited,
 		500: ExitAPI,
+		503: ExitUnavailable,
 	}
 	for status, want := range cases {
 		env, _, _ := testEnv(func(req *http.Request) (*http.Response, error) {
