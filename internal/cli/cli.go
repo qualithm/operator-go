@@ -33,6 +33,7 @@ const (
 	ExitConflict    = 5 // 409
 	ExitRateLimited = 6 // 429
 	ExitAPI         = 7 // other non-2xx response
+	ExitUnavailable = 8 // 503: a backend is briefly unavailable; retry after a pause
 )
 
 // Env bundles the I/O streams and the client constructor the CLI depends on.
@@ -241,6 +242,8 @@ func exitForStatus(status int) int {
 		return ExitConflict
 	case 429:
 		return ExitRateLimited
+	case 503:
+		return ExitUnavailable
 	default:
 		return ExitAPI
 	}

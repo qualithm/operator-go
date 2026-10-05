@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -113,6 +114,7 @@ func (c *Client) DryRun() bool { return c.dryRun }
 type envelope struct {
 	Data    json.RawMessage `json:"data,omitempty"`
 	Message string          `json:"message,omitempty"`
+	Code    string          `json:"code,omitempty"`
 	Status  int             `json:"status,omitempty"`
 }
 
@@ -192,6 +194,8 @@ func (c *Client) doAuth(ctx context.Context, method, path string, body, out any,
 			Path:       pathOnly(path),
 			StatusCode: res.StatusCode,
 			Message:    env.Message,
+			Code:       env.Code,
+			RetryAfter: retryAfter(res.Header.Get("Retry-After")),
 		}
 	}
 
@@ -223,4 +227,13 @@ func pageQuery(page, limit int) string {
 		return ""
 	}
 	return "?" + v.Encode()
+}
+
+// retryAfter parses a Retry-After header given in seconds; anything else is zero.
+func retryAfter(header string) time.Duration {
+	seconds, err := strconv.Atoi(strings.TrimSpace(header))
+	if err != nil || seconds < 0 {
+		return 0
+	}
+	return time.Duration(seconds) * time.Second
 }
