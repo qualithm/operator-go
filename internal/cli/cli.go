@@ -1,10 +1,5 @@
 // Package cli implements the qualithm operator CLI: verbs over the platform
-// management API (authorities, enrollments, credentials, devices, api-tokens)
-// plus an idempotent `apply` for device-as-code manifests.
-//
-// Every command authenticates with a member API token and supports two output
-// modes — human tables by default, stable line-delimited JSON with --json — and
-// a --dry-run that reports the planned mutation without applying it.
+// management API plus an idempotent `apply` for device-as-code manifests.
 //
 // The CLI deliberately uses the stdlib flag package; common flags (--url,
 // --token, --json, --dry-run) are registered per leaf command via addCommon.

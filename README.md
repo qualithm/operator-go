@@ -4,19 +4,21 @@
 [![codecov](https://codecov.io/gh/qualithm/operator-go/graph/badge.svg)](https://codecov.io/gh/qualithm/operator-go)
 
 Go client library and operator CLI for the Qualithm platform management API. The shared `operator`
-package authenticates with a member API token and backs both the `qualithm` CLI and the forthcoming
-MCP server, so the two surfaces never diverge.
+package authenticates with a member API token and backs both the `qualithm` CLI and the
+[`operator-mcp`](https://github.com/qualithm/operator-mcp) server, so the two surfaces never
+diverge.
 
 ## Features
 
-- **`operator` client package** — typed methods over the provisioning surface: authorities,
-  enrollments, credentials, devices, and API tokens.
+- **`operator` client package** — typed methods over the management API, from device provisioning to
+  teams, dashboards, automations, billing and observability.
 - **`qualithm` CLI** — verbs over every resource, plus an idempotent `apply` for device-as-code
   manifests.
-- **Dual output** — human-readable tables by default, stable line-delimited JSON with `--json`.
+- **Dual output** — human-readable tables by default, stable JSON with `--json`.
 - **Client-level dry-run** — `--dry-run` reports the planned mutation without sending it; GETs still
   execute so reads stay accurate.
-- **Stable exit codes** — scriptable status mapping (auth, not-found, conflict, rate-limited…).
+- **Stable exit codes** — scriptable status mapping (auth, not-found, conflict, rate-limited,
+  unavailable…).
 
 ## Installation
 
@@ -52,7 +54,7 @@ qualithm credential mint --device dev_123 --json
 qualithm credential revoke --device dev_123 --credential cred_123 --dry-run
 ```
 
-Global flags are accepted by every verb and must precede positional arguments:
+Every verb accepts the global flags, before or after its positional arguments:
 
 | Flag        | Env                  | Description                                |
 | ----------- | -------------------- | ------------------------------------------ |
@@ -71,6 +73,7 @@ Global flags are accepted by every verb and must precede positional arguments:
 | `enrollment` | `list` · `create` · `revoke <id>`                              |
 | `credential` | `list` · `mint` · `cert` · `rotate` · `revoke`                 |
 | `device`     | `list` · `get <id>` · `create` · `update <id>` · `delete <id>` |
+| `space`      | `list` · `get <id>` · `create` · `update <id>` · `delete <id>` |
 | `token`      | `list` · `create` · `revoke <id>`                              |
 | `apply`      | `<manifest.yaml>` — idempotent device-as-code reconcile        |
 | `version`    | print the CLI version                                          |
@@ -84,7 +87,7 @@ qualithm device get dev_123
 qualithm device create --space spc_123 --name gateway-01
 
 # credentials (one-time secrets are printed once, on create)
-qualithm credential mint --device dev_123 --label rotate-2025 --expires-at 2025-12-31T00:00:00Z
+qualithm credential mint --device dev_123 --label rotate-2027 --expires-at 2027-12-31T00:00:00Z
 qualithm credential cert --device dev_123 --csr-file device.csr --expires-days 90
 qualithm credential rotate --device dev_123 --credential cred_123 --revoke
 
@@ -128,9 +131,10 @@ qualithm apply fleet.yaml             # apply
 | 7    | api (other non-2xx)    |
 | 8    | unavailable (503)      |
 
-403 is not always a missing permission — a paused zone also returns it: `qualithm space create --zone <x>
-returns exit code 3 with `Zone rejects creation in this environment` while the zone is paused. Pick an open
-zone (production opens `de-fra-a` and `sg-sin-a`; lower environments scope to `sg-sin-a`).
+403 is not always a missing permission — a paused zone also returns it:
+`qualithm space create --zone <x>` returns exit code 3 with
+`Zone rejects creation in this environment` while the zone is paused. Pick an open zone (production
+opens `de-fra-a` and `sg-sin-a`; lower environments scope to `sg-sin-a`).
 
 ### Using the client library
 
@@ -203,10 +207,8 @@ go run ./examples/basic_usage
 make install-tools
 ```
 
-This installs local development tooling, including `golangci-lint`, `goimports`, and `govulncheck`.
-
-> **Note:** Tools are installed to `$GOPATH/bin` (typically `~/go/bin`). Make sure that directory is
-> on your `$PATH`, otherwise the installed binaries won't be found.
+This installs `golangci-lint`, `goimports`, `govulncheck` and `gosec` into `$GOPATH/bin` (`~/go/bin`
+by default). Put that directory on your `PATH`.
 
 ### Building
 
@@ -237,7 +239,7 @@ make gosec   # standalone gosec scan
 make lint    # golangci-lint (includes gosec checks via .golangci.yaml)
 ```
 
-Daily CI security audit runs both tools in `.github/workflows/audit.yaml`.
+`.github/workflows/audit.yaml` runs `govulncheck` and `gosec` daily.
 
 ## Minimum Supported Go Version
 
