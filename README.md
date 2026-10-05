@@ -126,6 +126,7 @@ qualithm apply fleet.yaml             # apply
 | 5    | conflict (409)         |
 | 6    | rate limited (429)     |
 | 7    | api (other non-2xx)    |
+| 8    | unavailable (503)      |
 
 403 is not always a missing permission — a paused zone also returns it: `qualithm space create --zone <x>
 returns exit code 3 with `Zone rejects creation in this environment` while the zone is paused. Pick an open

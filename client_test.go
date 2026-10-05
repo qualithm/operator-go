@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 // roundTripFunc adapts a function to an [http.RoundTripper] so tests can
@@ -107,6 +108,30 @@ func TestErrorStatusReturnsClientError(t *testing.T) {
 	}
 	if ce.StatusCode != 404 || ce.Message != "Device not found" {
 		t.Fatalf("unexpected ClientError: %+v", ce)
+	}
+}
+
+func TestUnavailableCarriesCodeAndRetryAfter(t *testing.T) {
+	c := newTestClient(t, func(req *http.Request) (*http.Response, error) {
+		res := jsonResponse(503, `{"message":"service temporarily unavailable","code":"backend_unavailable"}`)
+		res.Header.Set("Retry-After", "5")
+		return res, nil
+	})
+	_, err := c.GetDevice(context.Background(), "dev_x")
+	var ce *ClientError
+	if !errors.As(err, &ce) {
+		t.Fatalf("expected ClientError, got %T: %v", err, err)
+	}
+	if !ce.Unavailable() || ce.Code != "backend_unavailable" || ce.RetryAfter != 5*time.Second {
+		t.Fatalf("unexpected ClientError: %+v", ce)
+	}
+}
+
+func TestRetryAfterIgnoresNonSeconds(t *testing.T) {
+	for _, header := range []string{"", "soon", "-1", "Wed, 21 Oct 2026 07:28:00 GMT"} {
+		if got := retryAfter(header); got != 0 {
+			t.Errorf("retryAfter(%q) = %v, want 0", header, got)
+		}
 	}
 }
 
