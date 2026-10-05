@@ -1,6 +1,5 @@
 // Command qualithm is the operator CLI for the Qualithm platform management
-// API: fleet and provisioning management (authorities, enrollments,
-// credentials, devices, api-tokens) plus an idempotent `apply` for
+// API: fleet and provisioning management plus an idempotent `apply` for
 // device-as-code manifests, authenticated with a member API token.
 package main
 
