@@ -520,6 +520,15 @@ func TestWorkspace(t *testing.T) {
 		t.Fatalf("path = %q prefs = %+v", rec.path, prefs)
 	}
 
+	c = recClient(t, 200, `{"data":{"api":"api.qualithm.com","zones":[{"id":"de-fra-a","name":"Frankfurt","open":true,"api":"api.de-fra-a.qualithm.com","gateway":{"host":"mqtt.de-fra-a.qualithm.com","port":8883}}]}}`, &rec)
+	zones, err := c.ListZones(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.path != "/zones" || len(zones.Zones) != 1 || !zones.Zones[0].Open || zones.Zones[0].Gateway.Port != 8883 {
+		t.Fatalf("path = %q zones = %+v", rec.path, zones)
+	}
+
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"spc_1","zone":"us"}],"last":1}}`, &rec)
 	spaces, err := c.ListZoneSpaces(context.Background(), "us", 0, 0)
 	if err != nil {

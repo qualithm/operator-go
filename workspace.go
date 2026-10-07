@@ -98,6 +98,14 @@ func (c *Client) GetCommunicationPreferences(ctx context.Context) (map[string]bo
 	return out, err
 }
 
+// ListZones returns the environment's device zones, open zones first, with
+// each zone's API and gateway endpoints.
+func (c *Client) ListZones(ctx context.Context) (Zones, error) {
+	var out Zones
+	err := c.do(ctx, http.MethodGet, "/zones", nil, &out)
+	return out, err
+}
+
 // ListZoneSpaces returns a page of spaces in the given device zone.
 func (c *Client) ListZoneSpaces(ctx context.Context, zone string, page, limit int) (Page[Space], error) {
 	var out Page[Space]
