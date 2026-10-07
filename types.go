@@ -103,6 +103,29 @@ type Space struct {
 	UpdatedAt   string          `json:"updatedAt"`
 }
 
+// GatewayEndpoint is where a device connects: a zone's MQTT gateway.
+type GatewayEndpoint struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+// Zone is one device zone of the environment. Open is whether it accepts new
+// resources; a closed zone stays listed so a caller can explain why.
+type Zone struct {
+	ID      string          `json:"id"`
+	Name    string          `json:"name"`
+	Open    bool            `json:"open"`
+	API     string          `json:"api"`
+	Gateway GatewayEndpoint `json:"gateway"`
+}
+
+// Zones is the environment's public endpoints: the global API host and every
+// zone, open zones first.
+type Zones struct {
+	API   string `json:"api"`
+	Zones []Zone `json:"zones"`
+}
+
 // APIToken is a member API token (metadata only; the secret is never listed).
 type APIToken struct {
 	ID         string `json:"id"`
