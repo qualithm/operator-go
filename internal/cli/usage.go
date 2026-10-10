@@ -5,7 +5,7 @@ const usageText = `qualithm — operator CLI for the Qualithm platform managemen
 Usage:
   qualithm <resource> <verb> [flags]
 
-Global flags (accepted by every verb; place before positional arguments):
+Global flags (accepted by every verb, before or after positional arguments):
   --url string     management API base URL (env QUALITHM_API_URL)
   --token string   member API token (env QUALITHM_API_TOKEN)
   --json           emit JSON instead of a human table
@@ -30,5 +30,5 @@ Examples:
 
 Exit codes:
   0 ok (incl. dry-run)  1 error  2 usage  3 auth  4 not-found  5 conflict
-  6 rate-limited        7 api
+  6 rate-limited        7 api    8 unavailable
 `
