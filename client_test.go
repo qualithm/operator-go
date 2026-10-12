@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"hash/crc32"
 	"io"
 	"net/http"
 	"strings"
@@ -44,6 +46,39 @@ func TestNewValidatesToken(t *testing.T) {
 	}
 	if _, err := New("qmt_sel.ver"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNewChecksTokenChecksum(t *testing.T) {
+	t.Parallel()
+	selector := strings.Repeat("a", 24)
+	verifier := strings.Repeat("0123456789abcdef", 4)
+	legacy := "qmt_" + selector + "." + verifier
+	issued := legacy + fmt.Sprintf("%08x", crc32.ChecksumIEEE([]byte(legacy)))
+	last := "0"
+	if strings.HasSuffix(issued, "0") {
+		last = "1"
+	}
+
+	tests := []struct {
+		name    string
+		token   string
+		wantErr error
+	}{
+		{"issued with a checksum", issued, nil},
+		{"issued before the checksum", legacy, nil},
+		{"checksum character changed", issued[:len(issued)-1] + last, ErrTokenChecksum},
+		{"verifier character changed", strings.Replace(issued, ".0", ".f", 1), ErrTokenChecksum},
+		{"checksum-length verifier that is not hex", legacy + "zzzzzzzz", nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := New(tt.token)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("New(%q) error = %v, want %v", tt.token, err, tt.wantErr)
+			}
+		})
 	}
 }
 
