@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,8 +18,42 @@ import (
 // DefaultBaseURL is the production management API base URL.
 const DefaultBaseURL = "https://api.qualithm.com"
 
-// TokenPrefix is the required prefix for member API tokens (qmt_<selector>.<verifier>).
+// TokenPrefix is the required prefix for member API tokens. A token is
+// qmt_<selector>.<verifier>, and one issued with a checksum ends in eight more
+// hex characters: the CRC-32 of everything before them.
 const TokenPrefix = "qmt_"
+
+// ErrTokenChecksum reports an API token whose checksum does not match the rest
+// of it: the token was mistyped or cut short.
+var ErrTokenChecksum = errors.New("operator: API token is mistyped or truncated")
+
+const (
+	verifierLen = 64
+	checksumLen = 8
+)
+
+// checkToken rejects a token whose checksum is wrong. A token issued without a
+// checksum has a shorter verifier and is left for the API to judge.
+func checkToken(token string) error {
+	_, verifier, found := strings.Cut(token, ".")
+	if !found || len(verifier) != verifierLen+checksumLen || !isLowerHex(verifier) {
+		return nil
+	}
+	split := len(token) - checksumLen
+	if fmt.Sprintf("%08x", crc32.ChecksumIEEE([]byte(token[:split]))) != token[split:] {
+		return ErrTokenChecksum
+	}
+	return nil
+}
+
+func isLowerHex(s string) bool {
+	for _, r := range s {
+		if (r < '0' || r > '9') && (r < 'a' || r > 'f') {
+			return false
+		}
+	}
+	return true
+}
 
 // httpDoer abstracts the subset of [*http.Client] the client uses. Tests
 // inject a fake implementation.
@@ -84,13 +119,17 @@ func WithUserAgent(ua string) Option {
 	}
 }
 
-// New constructs a [Client] authenticating with the given API token.
+// New constructs a [Client] authenticating with the given API token. It
+// returns [ErrTokenChecksum] for a token whose checksum is wrong.
 func New(token string, opts ...Option) (*Client, error) {
 	if token == "" {
 		return nil, errors.New("operator: empty API token")
 	}
 	if !strings.HasPrefix(token, TokenPrefix) {
 		return nil, fmt.Errorf("operator: API token must start with %q", TokenPrefix)
+	}
+	if err := checkToken(token); err != nil {
+		return nil, err
 	}
 	c := &Client{
 		baseURL: DefaultBaseURL,
