@@ -14,13 +14,13 @@ type AddTeamMemberInput struct {
 
 // UpdateTeamMemberInput is the request body for [Client.UpdateTeamMember].
 type UpdateTeamMemberInput struct {
-	Role string `json:"role"` // "owner" | "manager" | "guest"
+	Role string `json:"role"` // "owner" | "manager" | "viewer"
 }
 
 // CreateTeamInviteInput is the request body for [Client.CreateTeamInvite].
 type CreateTeamInviteInput struct {
 	Email string `json:"email"`
-	Role  string `json:"role"` // "owner" | "manager" | "guest"
+	Role  string `json:"role"` // "owner" | "manager" | "viewer"
 }
 
 // ListTeamMembers returns a page of active members of the team.
