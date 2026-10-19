@@ -566,10 +566,13 @@ func TestSpaceUnknownVerbAndNoVerb(t *testing.T) {
 
 func TestTokenListRevokeAndCreateRefused(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		return jsonResp(200, `{"data":{"current":1,"items":[{"id":"tok_1","name":"ci","status":"active"}],"last":1}}`), nil
+		return jsonResp(200, `{"data":{"current":1,"items":[{"id":"tok_1","name":"ci","status":"active","role":"viewer"},{"id":"tok_2","name":"old","status":"active","role":null}],"last":1}}`), nil
 	})
 	if code := run(env, "token", "list", "--token", tok); code != ExitOK {
 		t.Fatalf("list exit = %d", code)
+	}
+	if !strings.Contains(out.String(), "viewer") || !strings.Contains(out.String(), "your role") {
+		t.Fatalf("stdout = %q", out.String())
 	}
 	if !strings.Contains(out.String(), "tok_1") {
 		t.Fatalf("stdout = %q", out.String())
