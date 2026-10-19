@@ -139,13 +139,6 @@ type APIToken struct {
 	UpdatedAt  string `json:"updatedAt"`
 }
 
-// APITokenWithSecret is returned by [Client.CreateAPIToken]. Secret is the
-// plaintext token, shown exactly once.
-type APITokenWithSecret struct {
-	Token  APIToken `json:"token"`
-	Secret string   `json:"secret"`
-}
-
 // Team is a team resource with the caller's membership context.
 type Team struct {
 	ID         string          `json:"id"`
@@ -358,7 +351,6 @@ type RoleAssignment struct {
 	AccountID string `json:"accountId"`
 	TeamID    string `json:"teamId"`
 	Role      string `json:"role"`
-	Status    string `json:"status"`
 	TeamName  string `json:"teamName"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
@@ -387,9 +379,9 @@ type BillingUsageDimension struct {
 
 // BillingSummary is the team's billing state for the current month.
 type BillingSummary struct {
-	Tier         string `json:"tier"`
-	MonthlyTotal int    `json:"monthlyTotal"`
-	Month        string `json:"month"` // YYYY-MM, UTC
+	Tier         string  `json:"tier"`
+	MonthlyTotal float64 `json:"monthlyTotal"` // USD; add-on prices make it fractional
+	Month        string  `json:"month"`        // YYYY-MM, UTC
 	LimitGrace   *struct {
 		EndsAt string `json:"endsAt"`
 	} `json:"limitGrace"`
@@ -417,7 +409,7 @@ type Invoice struct {
 	ID        string          `json:"id"`
 	TeamID    string          `json:"teamId"`
 	Status    string          `json:"status"`
-	TotalC    *string         `json:"totalC"`
+	TotalC    *int64          `json:"totalC"` // minor units
 	Currency  *string         `json:"currency"`
 	Payload   json.RawMessage `json:"payload"`
 	CreatedAt string          `json:"createdAt"`
