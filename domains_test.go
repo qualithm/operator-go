@@ -541,21 +541,21 @@ func TestWorkspace(t *testing.T) {
 
 func TestBilling(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 200, `{"data":{"tier":"pro","monthlyTotal":2900,"month":"2026-08","usage":{"devices":{"used":3,"limit":50}}}}`, &rec)
+	c := recClient(t, 200, `{"data":{"tier":"pro","monthlyTotal":106.5,"month":"2026-08","usage":{"devices":{"used":3,"limit":50}}}}`, &rec)
 	sum, err := c.GetBillingSummary(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/billing/summary" || sum.Tier != "pro" || sum.Usage.Devices.Used != 3 {
+	if rec.path != "/billing/summary" || sum.Tier != "pro" || sum.MonthlyTotal != 106.5 || sum.Usage.Devices.Used != 3 {
 		t.Fatalf("path = %q summary = %+v", rec.path, sum)
 	}
 
-	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid"}],"last":1}}`, &rec)
+	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid","totalC":2900}],"last":1}}`, &rec)
 	invoices, err := c.ListInvoices(context.Background(), 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/invoices" || len(invoices.Items) != 1 {
+	if rec.path != "/invoices" || len(invoices.Items) != 1 || invoices.Items[0].TotalC == nil || *invoices.Items[0].TotalC != 2900 {
 		t.Fatalf("path = %q invoices = %+v", rec.path, invoices)
 	}
 
