@@ -128,11 +128,14 @@ type Zones struct {
 
 // APIToken is a member API token (metadata only; the secret is never listed).
 type APIToken struct {
-	ID         string `json:"id"`
-	AccountID  string `json:"accountId"`
-	TeamID     string `json:"teamId"`
-	Name       string `json:"name"`
-	Status     string `json:"status"`
+	ID        string `json:"id"`
+	AccountID string `json:"accountId"`
+	TeamID    string `json:"teamId"`
+	Name      string `json:"name"`
+	Status    string `json:"status"`
+	// Role is the token's ceiling: "owner" | "manager" | "viewer". Empty means the creator's
+	// current role (tokens made before ceilings).
+	Role       string `json:"role"`
 	ExpiresAt  string `json:"expiresAt"`
 	LastUsedAt string `json:"lastUsedAt"`
 	CreatedAt  string `json:"createdAt"`
