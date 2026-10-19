@@ -139,13 +139,6 @@ type APIToken struct {
 	UpdatedAt  string `json:"updatedAt"`
 }
 
-// APITokenWithSecret is returned by [Client.CreateAPIToken]. Secret is the
-// plaintext token, shown exactly once.
-type APITokenWithSecret struct {
-	Token  APIToken `json:"token"`
-	Secret string   `json:"secret"`
-}
-
 // Team is a team resource with the caller's membership context.
 type Team struct {
 	ID         string          `json:"id"`

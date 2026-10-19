@@ -564,7 +564,7 @@ func TestSpaceUnknownVerbAndNoVerb(t *testing.T) {
 
 // --- tokens ----------------------------------------------------------------
 
-func TestTokenListCreateRevoke(t *testing.T) {
+func TestTokenListRevokeAndCreateRefused(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
 		return jsonResp(200, `{"data":{"current":1,"items":[{"id":"tok_1","name":"ci","status":"active"}],"last":1}}`), nil
 	})
@@ -574,14 +574,15 @@ func TestTokenListCreateRevoke(t *testing.T) {
 	if !strings.Contains(out.String(), "tok_1") {
 		t.Fatalf("stdout = %q", out.String())
 	}
-	env2, out2, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		return jsonResp(201, `{"data":{"token":{"id":"tok_1"},"secret":"qmt_new"}}`), nil
+	env2, _, errBuf2 := testEnv(func(*http.Request) (*http.Response, error) {
+		t.Fatal("create must not call the API")
+		return nil, nil
 	})
-	if code := run(env2, "token", "create", "--name", "ci", "--token", tok); code != ExitOK {
+	if code := run(env2, "token", "create", "--name", "ci", "--token", tok); code != ExitUsage {
 		t.Fatalf("create exit = %d", code)
 	}
-	if !strings.Contains(out2.String(), "qmt_new") {
-		t.Fatalf("stdout = %q", out2.String())
+	if !strings.Contains(errBuf2.String(), "in the app") {
+		t.Fatalf("stderr = %q", errBuf2.String())
 	}
 	env3, out3, _ := testEnv(func(req *http.Request) (*http.Response, error) {
 		return jsonResp(200, `{"message":"ok"}`), nil
