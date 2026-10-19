@@ -102,10 +102,10 @@ func TestMembers(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"message":"ok"}`, &rec)
-	if err := c.UpdateTeamMember(context.Background(), "team_1", "mem_1", UpdateTeamMemberInput{Role: "guest"}); err != nil {
+	if err := c.UpdateTeamMember(context.Background(), "team_1", "mem_1", UpdateTeamMemberInput{Role: "viewer"}); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPatch || rec.body["role"] != "guest" {
+	if rec.method != http.MethodPatch || rec.body["role"] != "viewer" {
 		t.Fatalf("request = %s body=%v", rec.method, rec.body)
 	}
 
@@ -127,11 +127,11 @@ func TestMembers(t *testing.T) {
 	}
 
 	c = recClient(t, 201, `{"data":{"id":"mem_4","status":"invited"}}`, &rec)
-	inv, err := c.CreateTeamInvite(context.Background(), "team_1", CreateTeamInviteInput{Email: "a@b.c", Role: "guest"})
+	inv, err := c.CreateTeamInvite(context.Background(), "team_1", CreateTeamInviteInput{Email: "a@b.c", Role: "viewer"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.body["email"] != "a@b.c" || rec.body["role"] != "guest" || inv.ID != "mem_4" {
+	if rec.body["email"] != "a@b.c" || rec.body["role"] != "viewer" || inv.ID != "mem_4" {
 		t.Fatalf("body=%v invite=%+v", rec.body, inv)
 	}
 

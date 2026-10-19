@@ -145,7 +145,7 @@ type Team struct {
 	Name       string          `json:"name"`
 	Payload    json.RawMessage `json:"payload"`
 	MemberID   string          `json:"memberId"`
-	MemberRole string          `json:"memberRole"` // "owner" | "manager" | "guest"
+	MemberRole string          `json:"memberRole"` // "owner" | "manager" | "viewer"
 	CreatedAt  string          `json:"createdAt"`
 	UpdatedAt  string          `json:"updatedAt"`
 }
@@ -155,7 +155,7 @@ type Member struct {
 	ID           string `json:"id"`
 	AccountID    string `json:"accountId"`
 	TeamID       string `json:"teamId"`
-	Role         string `json:"role"`   // "owner" | "manager" | "guest"
+	Role         string `json:"role"`   // "owner" | "manager" | "viewer"
 	Status       string `json:"status"` // "active" | "invited"
 	AccountEmail string `json:"accountEmail"`
 	AccountName  string `json:"accountName"`
