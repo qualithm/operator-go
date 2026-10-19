@@ -310,21 +310,6 @@ func TestListAPITokens(t *testing.T) {
 	}
 }
 
-func TestCreateAPIToken(t *testing.T) {
-	var rec recorder
-	c := recClient(t, 201, `{"data":{"token":{"id":"tok_1"},"secret":"qmt_new"}}`, &rec)
-	got, err := c.CreateAPIToken(context.Background(), CreateAPITokenInput{Name: "ci", ExpiresInDays: 90})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if rec.method != http.MethodPost || rec.path != "/api-tokens" {
-		t.Fatalf("request = %s %s", rec.method, rec.path)
-	}
-	if got.Secret != "qmt_new" || got.Token.ID != "tok_1" {
-		t.Fatalf("result = %+v", got)
-	}
-}
-
 func TestRevokeAPIToken(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"message":"ok"}`, &rec)

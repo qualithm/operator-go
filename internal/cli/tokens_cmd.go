@@ -5,24 +5,24 @@ import (
 	"flag"
 	"fmt"
 	"io"
-
-	operator "github.com/qualithm/operator-go"
 )
 
 func runToken(ctx context.Context, env Env, args []string) int {
 	if len(args) == 0 {
-		_, _ = fmt.Fprintln(env.Stderr, "usage: qualithm token list|create|revoke <id> [flags]")
+		_, _ = fmt.Fprintln(env.Stderr, "usage: qualithm token list|revoke <id> [flags]")
 		return ExitUsage
 	}
 	switch args[0] {
 	case "list", "ls":
 		return tokenList(ctx, env, args[1:])
 	case "create", "new":
-		return tokenCreate(ctx, env, args[1:])
+		// Minting is browser-only, so a leaked token can't renew itself.
+		_, _ = fmt.Fprintln(env.Stderr, "qualithm: create API tokens in the app, on your team page")
+		return ExitUsage
 	case "revoke", "delete", "rm":
 		return tokenRevoke(ctx, env, args[1:])
 	case "-h", "--help", "help":
-		_, _ = fmt.Fprintln(env.Stdout, "usage: qualithm token list|create|revoke <id> [flags]")
+		_, _ = fmt.Fprintln(env.Stdout, "usage: qualithm token list|revoke <id> [flags]")
 		return ExitOK
 	default:
 		_, _ = fmt.Fprintf(env.Stderr, "qualithm: unknown token verb %q\n", args[0])
@@ -53,28 +53,6 @@ func tokenList(ctx context.Context, env Env, args []string) int {
 			row(tw, t.ID, dash(t.Name), t.Status, dash(t.ExpiresAt), dash(t.LastUsedAt))
 		}
 		_ = tw.Flush()
-	}, err)
-}
-
-func tokenCreate(ctx context.Context, env Env, args []string) int {
-	fs := flag.NewFlagSet("token create", flag.ContinueOnError)
-	cf := addCommon(fs)
-	name := fs.String("name", "", "token name")
-	days := fs.Int("expires-days", 0, "days until expiry (default 90, max 365)")
-	if code := parseNone(env, fs, args); code >= 0 {
-		return code
-	}
-	client, code := cf.client(env)
-	if code >= 0 {
-		return code
-	}
-	res, err := client.CreateAPIToken(ctx, operator.CreateAPITokenInput{
-		Name:          *name,
-		ExpiresInDays: *days,
-	})
-	return cf.report(env, res, func(w io.Writer) {
-		_, _ = fmt.Fprintf(w, "api token %s created\n", res.Token.ID)
-		_, _ = fmt.Fprintf(w, "secret (shown once): %s\n", res.Secret)
 	}, err)
 }
 
