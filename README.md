@@ -91,8 +91,8 @@ qualithm credential mint --device dev_123 --label rotate-2027 --expires-at 2027-
 qualithm credential cert --device dev_123 --csr-file device.csr --expires-days 90
 qualithm credential rotate --device dev_123 --credential cred_123 --revoke
 
-# api tokens
-qualithm token create --name ci-runner --expires-days 90 --json
+# api tokens (create them in the app; the CLI lists and revokes)
+qualithm token list
 
 # certificate authorities (bring-your-own PEM)
 qualithm authority create --name fleet-ca --kind byo --cert-file ca.pem
