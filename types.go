@@ -335,7 +335,20 @@ type Workspace struct {
 	TeamName   string `json:"teamName"`
 	MemberID   string `json:"memberId"`
 	MemberRole string `json:"memberRole"`
-	UpdatedAt  string `json:"updatedAt"`
+	// Permissions is what the caller can do here, as catalogue names such as "device.write": their
+	// role, lowered to a token's ceiling.
+	Permissions []string `json:"permissions"`
+	UpdatedAt   string   `json:"updatedAt"`
+}
+
+// Can reports whether the caller holds a permission in this workspace.
+func (w Workspace) Can(permission string) bool {
+	for _, p := range w.Permissions {
+		if p == permission {
+			return true
+		}
+	}
+	return false
 }
 
 // Account is the caller's account resource.
