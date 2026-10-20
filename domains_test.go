@@ -452,13 +452,16 @@ func TestReadEvents(t *testing.T) {
 
 func TestWorkspace(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 200, `{"data":{"accountId":"acc_1","teamId":"team_1","memberRole":"owner"}}`, &rec)
+	c := recClient(t, 200, `{"data":{"accountId":"acc_1","teamId":"team_1","memberRole":"owner","permissions":["device.read","device.write"]}}`, &rec)
 	ws, err := c.GetWorkspace(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if rec.path != "/workspace" || ws.MemberRole != "owner" {
 		t.Fatalf("path = %q ws = %+v", rec.path, ws)
+	}
+	if !ws.Can("device.write") || ws.Can("billing.manage") {
+		t.Fatalf("permissions = %v", ws.Permissions)
 	}
 
 	c = recClient(t, 200, `{"data":{"id":"acc_1","email":"a@b.c"}}`, &rec)
