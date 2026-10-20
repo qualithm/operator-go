@@ -45,12 +45,16 @@ func tokenList(ctx context.Context, env Env, args []string) int {
 	res, err := client.ListAPITokens(ctx, *page, *limit)
 	return cf.report(env, res, func(w io.Writer) {
 		tw := newTable(w)
-		row(tw, "ID", "NAME", "STATUS", "EXPIRES", "LAST-USED")
+		row(tw, "ID", "NAME", "ROLE", "STATUS", "EXPIRES", "LAST-USED")
 		for _, t := range res.Items {
 			if t == nil {
 				continue
 			}
-			row(tw, t.ID, dash(t.Name), t.Status, dash(t.ExpiresAt), dash(t.LastUsedAt))
+			role := t.Role
+			if role == "" {
+				role = "your role"
+			}
+			row(tw, t.ID, dash(t.Name), role, t.Status, dash(t.ExpiresAt), dash(t.LastUsedAt))
 		}
 		_ = tw.Flush()
 	}, err)
