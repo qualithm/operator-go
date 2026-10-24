@@ -19,14 +19,14 @@ type SendDeviceCommandInput struct {
 // ListDeviceCommands returns a page of command deliveries for a device.
 func (c *Client) ListDeviceCommands(ctx context.Context, deviceID string, page, limit int) (Page[DeviceCommandSummary], error) {
 	var out Page[DeviceCommandSummary]
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/devices/%s/commands", deviceID)+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/devices/%s/commands", deviceID)+pageQuery(page, limit), nil, &out)
 	return out, err
 }
 
 // SendDeviceCommand queues a command for a device.
 func (c *Client) SendDeviceCommand(ctx context.Context, deviceID string, in SendDeviceCommandInput) (DeviceCommandQueued, error) {
 	var out DeviceCommandQueued
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/devices/%s/commands", deviceID), in, &out)
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/devices/%s/commands", deviceID), in, &out)
 	return out, err
 }
 
@@ -34,17 +34,17 @@ func (c *Client) SendDeviceCommand(ctx context.Context, deviceID string, in Send
 // connect-time manifest.
 func (c *Client) GetDeviceCapabilities(ctx context.Context, deviceID string) ([]DeviceCapability, error) {
 	var out []DeviceCapability
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/devices/%s/capabilities", deviceID), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/devices/%s/capabilities", deviceID), nil, &out)
 	return out, err
 }
 
 // ParkDevice parks a device: it stops counting against the active-device
 // limit while its credentials and history survive. Idempotent.
 func (c *Client) ParkDevice(ctx context.Context, deviceID string) error {
-	return c.do(ctx, http.MethodPost, fmt.Sprintf("/devices/%s/park", deviceID), nil, nil)
+	return c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/devices/%s/park", deviceID), nil, nil)
 }
 
 // UnparkDevice returns a parked device to active. Idempotent.
 func (c *Client) UnparkDevice(ctx context.Context, deviceID string) error {
-	return c.do(ctx, http.MethodPost, fmt.Sprintf("/devices/%s/unpark", deviceID), nil, nil)
+	return c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/devices/%s/unpark", deviceID), nil, nil)
 }

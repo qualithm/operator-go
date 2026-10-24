@@ -14,7 +14,7 @@ type UpdateTeamInput struct {
 // ListTeams returns a page of teams the token's member belongs to.
 func (c *Client) ListTeams(ctx context.Context, page, limit int) (Page[Team], error) {
 	var out Page[Team]
-	err := c.do(ctx, http.MethodGet, "/teams"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "/v1/teams"+pageQuery(page, limit), nil, &out)
 	return out, err
 }
 
@@ -22,25 +22,25 @@ func (c *Client) ListTeams(ctx context.Context, page, limit int) (Page[Team], er
 // the initial name; rename it with [Client.UpdateTeam].
 func (c *Client) CreateTeam(ctx context.Context) (Team, error) {
 	var out Team
-	err := c.do(ctx, http.MethodPost, "/teams", nil, &out)
+	err := c.do(ctx, http.MethodPost, "/v1/teams", nil, &out)
 	return out, err
 }
 
 // GetTeam retrieves a single team by ID.
 func (c *Client) GetTeam(ctx context.Context, teamID string) (Team, error) {
 	var out Team
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/teams/%s", teamID), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/teams/%s", teamID), nil, &out)
 	return out, err
 }
 
 // UpdateTeam renames a team. This endpoint returns no resource body.
 func (c *Client) UpdateTeam(ctx context.Context, teamID string, in UpdateTeamInput) error {
-	return c.do(ctx, http.MethodPatch, fmt.Sprintf("/teams/%s", teamID), in, nil)
+	return c.do(ctx, http.MethodPatch, fmt.Sprintf("/v1/teams/%s", teamID), in, nil)
 }
 
 // DeleteTeam deletes a team.
 func (c *Client) DeleteTeam(ctx context.Context, teamID string) error {
-	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/teams/%s", teamID), nil, nil)
+	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/v1/teams/%s", teamID), nil, nil)
 }
 
 // GetTeamDeviceState returns the latest state snapshot for every device in
@@ -49,6 +49,6 @@ func (c *Client) GetTeamDeviceState(ctx context.Context, teamID string) ([]Devic
 	var out struct {
 		Items []DeviceStateSnapshot `json:"items"`
 	}
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/teams/%s/device-state", teamID), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/teams/%s/device-states", teamID), nil, &out)
 	return out.Items, err
 }

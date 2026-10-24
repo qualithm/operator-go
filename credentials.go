@@ -25,7 +25,7 @@ type IssueCertInput struct {
 // ListCredentials returns all credentials for a device.
 func (c *Client) ListCredentials(ctx context.Context, deviceID string) ([]Credential, error) {
 	var out []Credential
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/devices/%s/credentials", deviceID), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/devices/%s/credentials", deviceID), nil, &out)
 	return out, err
 }
 
@@ -33,7 +33,7 @@ func (c *Client) ListCredentials(ctx context.Context, deviceID string) ([]Creden
 // exactly once.
 func (c *Client) MintCredential(ctx context.Context, deviceID string, in MintCredentialInput) (CredentialWithSecret, error) {
 	var out CredentialWithSecret
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/devices/%s/credentials", deviceID), in, &out)
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/devices/%s/credentials", deviceID), in, &out)
 	return out, err
 }
 
@@ -41,7 +41,7 @@ func (c *Client) MintCredential(ctx context.Context, deviceID string, in MintCre
 // CertificatePEM and CACertificatePEM are shown exactly once.
 func (c *Client) IssueCert(ctx context.Context, deviceID string, in IssueCertInput) (CertCredential, error) {
 	var out CertCredential
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/devices/%s/credentials/cert", deviceID), in, &out)
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/devices/%s/credentials/cert", deviceID), in, &out)
 	return out, err
 }
 
@@ -49,7 +49,7 @@ func (c *Client) IssueCert(ctx context.Context, deviceID string, in IssueCertInp
 // credential is revoked immediately; otherwise it stays active so the device
 // can finish swapping. The returned Secret is shown exactly once.
 func (c *Client) RotateCredential(ctx context.Context, deviceID, credentialID string, in MintCredentialInput, revoke bool) (CredentialWithSecret, error) {
-	path := fmt.Sprintf("/devices/%s/credentials/%s/rotate", deviceID, credentialID)
+	path := fmt.Sprintf("{team}/devices/%s/credentials/%s/rotate", deviceID, credentialID)
 	if revoke {
 		path += "?revoke=true"
 	}
@@ -60,5 +60,5 @@ func (c *Client) RotateCredential(ctx context.Context, deviceID, credentialID st
 
 // RevokeCredential revokes a credential and drops any active session.
 func (c *Client) RevokeCredential(ctx context.Context, deviceID, credentialID string) error {
-	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/devices/%s/credentials/%s", deviceID, credentialID), nil, nil)
+	return c.do(ctx, http.MethodDelete, fmt.Sprintf("{team}/devices/%s/credentials/%s", deviceID, credentialID), nil, nil)
 }
