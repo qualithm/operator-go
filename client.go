@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -66,6 +67,8 @@ type httpDoer interface {
 type Client struct {
 	baseURL   string
 	token     string
+	teamID    string
+	teamMu    sync.Mutex
 	http      httpDoer
 	dryRun    bool
 	recorder  func(Action)
@@ -82,6 +85,12 @@ func WithBaseURL(u string) Option {
 			c.baseURL = strings.TrimRight(u, "/")
 		}
 	}
+}
+
+// WithTeam sets the team the client acts on. Without it, the client asks the API on first use:
+// an API token is pinned to one team, so that is the team it finds.
+func WithTeam(teamID string) Option {
+	return func(c *Client) { c.teamID = teamID }
 }
 
 // WithHTTPClient sets the underlying HTTP client. When nil, a client with a
@@ -146,6 +155,45 @@ func New(token string, opts ...Option) (*Client, error) {
 	return c, nil
 }
 
+// teamPlaceholder starts the path of every team-scoped route. Requests replace it with the
+// client's team, so every team route names its team (API v1).
+const teamPlaceholder = "{team}"
+
+// ErrNoTeam is returned when the client has no team set and the credential can act on none, or
+// on more than one, so there is no single team to pick. Set one with [WithTeam].
+var ErrNoTeam = errors.New("operator: no single team for this credential; set one with WithTeam")
+
+// TeamID returns the team the client acts on, asking the API once if [WithTeam] wasn't given.
+func (c *Client) TeamID(ctx context.Context) (string, error) {
+	c.teamMu.Lock()
+	defer c.teamMu.Unlock()
+	if c.teamID != "" {
+		return c.teamID, nil
+	}
+	var page Page[Team]
+	if err := c.do(ctx, http.MethodGet, "/v1/teams?limit=2", nil, &page); err != nil {
+		return "", err
+	}
+	if len(page.Items) != 1 || page.Items[0] == nil {
+		return "", ErrNoTeam
+	}
+	c.teamID = page.Items[0].ID
+	return c.teamID, nil
+}
+
+// resolvePath fills in the team for a team-scoped path.
+func (c *Client) resolvePath(ctx context.Context, path string) (string, error) {
+	rest, ok := strings.CutPrefix(path, teamPlaceholder)
+	if !ok {
+		return path, nil
+	}
+	teamID, err := c.TeamID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return "/v1/teams/" + url.PathEscape(teamID) + rest, nil
+}
+
 // DryRun reports whether the client is in dry-run mode.
 func (c *Client) DryRun() bool { return c.dryRun }
 
@@ -172,6 +220,10 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 // authenticates with an automation trigger secret rather than the member API
 // token; every other route passes an empty override.
 func (c *Client) doAuth(ctx context.Context, method, path string, body, out any, bearerOverride string) error {
+	path, err := c.resolvePath(ctx, path)
+	if err != nil {
+		return err
+	}
 	if c.mutating(method) {
 		action := Action{Method: method, Path: path, Body: body}
 		if c.recorder != nil {
@@ -254,6 +306,24 @@ func pathOnly(path string) string {
 }
 
 // pageQuery renders page/limit query parameters, omitting zero values.
+// filterQuery is pageQuery with one filter, which is left out when empty.
+func filterQuery(key, value string, page, limit int) string {
+	v := url.Values{}
+	if value != "" {
+		v.Set(key, value)
+	}
+	if page > 0 {
+		v.Set("page", fmt.Sprint(page))
+	}
+	if limit > 0 {
+		v.Set("limit", fmt.Sprint(limit))
+	}
+	if len(v) == 0 {
+		return ""
+	}
+	return "?" + v.Encode()
+}
+
 func pageQuery(page, limit int) string {
 	v := url.Values{}
 	if page > 0 {

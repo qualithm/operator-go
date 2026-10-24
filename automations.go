@@ -57,60 +57,60 @@ type IssuedTriggerSecret struct {
 // ListAutomations returns a page of automations for the token's team.
 func (c *Client) ListAutomations(ctx context.Context, page, limit int) (Page[Automation], error) {
 	var out Page[Automation]
-	err := c.do(ctx, http.MethodGet, "/automations"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/automations"+pageQuery(page, limit), nil, &out)
 	return out, err
 }
 
 // CreateAutomation creates an automation from a full payload.
 func (c *Client) CreateAutomation(ctx context.Context, in CreateAutomationInput) (Automation, error) {
 	var out Automation
-	err := c.do(ctx, http.MethodPost, "/automations", in, &out)
+	err := c.do(ctx, http.MethodPost, "{team}/automations", in, &out)
 	return out, err
 }
 
 // GetAutomation retrieves a single automation by ID.
 func (c *Client) GetAutomation(ctx context.Context, automationID string) (Automation, error) {
 	var out Automation
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/automations/%s", automationID), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/automations/%s", automationID), nil, &out)
 	return out, err
 }
 
 // UpdateAutomation updates an automation's name, space, payload, or template
 // params. This endpoint returns no resource body.
 func (c *Client) UpdateAutomation(ctx context.Context, automationID string, in UpdateAutomationInput) error {
-	return c.do(ctx, http.MethodPatch, fmt.Sprintf("/automations/%s", automationID), in, nil)
+	return c.do(ctx, http.MethodPatch, fmt.Sprintf("{team}/automations/%s", automationID), in, nil)
 }
 
 // DeleteAutomation deletes an automation.
 func (c *Client) DeleteAutomation(ctx context.Context, automationID string) error {
-	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/automations/%s", automationID), nil, nil)
+	return c.do(ctx, http.MethodDelete, fmt.Sprintf("{team}/automations/%s", automationID), nil, nil)
 }
 
 // EnableAutomation enables an automation and returns the updated resource.
 func (c *Client) EnableAutomation(ctx context.Context, automationID string) (Automation, error) {
 	var out Automation
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/automations/%s/enable", automationID), nil, &out)
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/automations/%s/enable", automationID), nil, &out)
 	return out, err
 }
 
 // DisableAutomation disables an automation and returns the updated resource.
 func (c *Client) DisableAutomation(ctx context.Context, automationID string) (Automation, error) {
 	var out Automation
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/automations/%s/disable", automationID), nil, &out)
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/automations/%s/disable", automationID), nil, &out)
 	return out, err
 }
 
 // RunAutomation queues a manual run of an automation.
 func (c *Client) RunAutomation(ctx context.Context, automationID string) (AutomationRunStarted, error) {
 	var out AutomationRunStarted
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/automations/%s/run", automationID), nil, &out)
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/automations/%s/run", automationID), nil, &out)
 	return out, err
 }
 
 // ListAutomationRuns returns a page of execution summaries for an automation.
 func (c *Client) ListAutomationRuns(ctx context.Context, automationID string, page, limit int) (Page[AutomationRun], error) {
 	var out Page[AutomationRun]
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/automations/%s/runs", automationID)+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/automations/%s/runs", automationID)+pageQuery(page, limit), nil, &out)
 	return out, err
 }
 
@@ -118,7 +118,7 @@ func (c *Client) ListAutomationRuns(ctx context.Context, automationID string, pa
 // template server-side.
 func (c *Client) CreateAutomationFromTemplate(ctx context.Context, in CreateAutomationFromTemplateInput) (Automation, error) {
 	var out Automation
-	err := c.do(ctx, http.MethodPost, "/automations/from-template", in, &out)
+	err := c.do(ctx, http.MethodPost, "{team}/automations/from-template", in, &out)
 	return out, err
 }
 
@@ -126,7 +126,7 @@ func (c *Client) CreateAutomationFromTemplate(ctx context.Context, in CreateAuto
 // to what the given device declared it can do.
 func (c *Client) ListAutomationTemplates(ctx context.Context, deviceID string) ([]AutomationTemplate, error) {
 	var out []AutomationTemplate
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/devices/%s/automation-templates", deviceID), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/devices/%s/automation-templates", deviceID), nil, &out)
 	return out, err
 }
 
@@ -140,7 +140,7 @@ func (c *Client) TriggerAutomation(ctx context.Context, secret string, triggerCo
 		body = triggerContext
 	}
 	var out TriggerAccepted
-	err := c.doAuth(ctx, http.MethodPost, "/automations/trigger", body, &out, secret)
+	err := c.doAuth(ctx, http.MethodPost, "/v1/automations/trigger", body, &out, secret)
 	return out, err
 }
 
@@ -148,6 +148,6 @@ func (c *Client) TriggerAutomation(ctx context.Context, secret string, triggerCo
 // automation. The URL and secret are shown exactly once.
 func (c *Client) CreateAutomationTriggerSecret(ctx context.Context, automationID string) (IssuedTriggerSecret, error) {
 	var out IssuedTriggerSecret
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/automations/%s/trigger-secret", automationID), nil, &out)
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/automations/%s/trigger-secret", automationID), nil, &out)
 	return out, err
 }

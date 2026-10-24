@@ -44,7 +44,7 @@ func TestListAuthorities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodGet || rec.path != "/authorities" {
+	if rec.method != http.MethodGet || rec.path != "/v1/teams/team_1/authorities" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 	if rec.query != "limit=50&page=2" {
@@ -62,7 +62,7 @@ func TestCreateAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/authorities" {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/authorities" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 	if rec.body["name"] != "ca" || rec.body["kind"] != "byo" || rec.body["certificatePem"] != "PEM" {
@@ -79,7 +79,7 @@ func TestRevokeAuthority(t *testing.T) {
 	if err := c.RevokeAuthority(context.Background(), "aut_9"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/authorities/aut_9" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/authorities/aut_9" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -91,7 +91,7 @@ func TestListCredentialsDecodesArray(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/devices/dev_1/credentials" {
+	if rec.path != "/v1/teams/team_1/devices/dev_1/credentials" {
 		t.Fatalf("path = %q", rec.path)
 	}
 	if len(creds) != 2 || creds[1].Kind != "cert" {
@@ -106,7 +106,7 @@ func TestIssueCert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/devices/dev_1/credentials/cert" {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/devices/dev_1/credentials/cert" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 	if rec.body["csrPem"] != "CSR" {
@@ -124,7 +124,7 @@ func TestRotateCredentialRevokeQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/devices/dev_1/credentials/cred_1/rotate" || rec.query != "revoke=true" {
+	if rec.path != "/v1/teams/team_1/devices/dev_1/credentials/cred_1/rotate" || rec.query != "revoke=true" {
 		t.Fatalf("request = %s?%s", rec.path, rec.query)
 	}
 	if got.Credential.RotatedFrom != "cred_1" || got.Secret != "qmd_x" {
@@ -149,7 +149,7 @@ func TestRevokeCredential(t *testing.T) {
 	if err := c.RevokeCredential(context.Background(), "dev_1", "cred_1"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/devices/dev_1/credentials/cred_1" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/devices/dev_1/credentials/cred_1" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -161,7 +161,7 @@ func TestListEnrollments(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/enrollments" || rec.query != "" {
+	if rec.path != "/v1/teams/team_1/enrollments" || rec.query != "" {
 		t.Fatalf("request = %s?%s", rec.path, rec.query)
 	}
 	if page.Items[0].ID != "enr_1" {
@@ -175,7 +175,7 @@ func TestRevokeEnrollment(t *testing.T) {
 	if err := c.RevokeEnrollment(context.Background(), "enr_9"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/enrollments/enr_9" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/enrollments/enr_9" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -187,7 +187,7 @@ func TestCreateDevice(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/devices" || rec.body["spaceId"] != "spc_1" {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/devices" || rec.body["spaceId"] != "spc_1" {
 		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
 	}
 	if got.ID != "dev_1" {
@@ -201,7 +201,7 @@ func TestUpdateDevice(t *testing.T) {
 	if err := c.UpdateDevice(context.Background(), "dev_1", UpdateDeviceInput{Name: "gw"}); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPatch || rec.path != "/devices/dev_1" || rec.body["name"] != "gw" {
+	if rec.method != http.MethodPatch || rec.path != "/v1/teams/team_1/devices/dev_1" || rec.body["name"] != "gw" {
 		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
 	}
 }
@@ -212,7 +212,7 @@ func TestDeleteDevice(t *testing.T) {
 	if err := c.DeleteDevice(context.Background(), "dev_1"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/devices/dev_1" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/devices/dev_1" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -223,7 +223,7 @@ func TestListSpaceDevices(t *testing.T) {
 	if _, err := c.ListSpaceDevices(context.Background(), "spc_1", 1, 100); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/spaces/spc_1/devices" || rec.query != "limit=100&page=1" {
+	if rec.path != "/v1/teams/team_1/devices" || rec.query != "limit=100&page=1&spaceId=spc_1" {
 		t.Fatalf("request = %s?%s", rec.path, rec.query)
 	}
 }
@@ -235,7 +235,7 @@ func TestListSpaces(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/spaces" || rec.query != "" {
+	if rec.path != "/v1/teams/team_1/spaces" || rec.query != "" {
 		t.Fatalf("request = %s?%s", rec.path, rec.query)
 	}
 	if page.Items[0].ID != "spc_1" || page.Items[0].Zone != "de-fra-a" || page.Items[0].DeviceTotal != 2 {
@@ -250,7 +250,7 @@ func TestGetSpace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/spaces/spc_1" {
+	if rec.path != "/v1/teams/team_1/spaces/spc_1" {
 		t.Fatalf("path = %q", rec.path)
 	}
 	if got.Name != "edge" || got.Zone != "sg-sin-a" {
@@ -265,7 +265,7 @@ func TestCreateSpace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/spaces" || rec.body["zone"] != "de-fra-a" {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/spaces" || rec.body["zone"] != "de-fra-a" {
 		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
 	}
 	if got.ID != "spc_1" {
@@ -279,7 +279,7 @@ func TestUpdateSpace(t *testing.T) {
 	if err := c.UpdateSpace(context.Background(), "spc_1", "edge"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPatch || rec.path != "/spaces/spc_1" || rec.body["name"] != "edge" {
+	if rec.method != http.MethodPatch || rec.path != "/v1/teams/team_1/spaces/spc_1" || rec.body["name"] != "edge" {
 		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
 	}
 }
@@ -290,7 +290,7 @@ func TestDeleteSpace(t *testing.T) {
 	if err := c.DeleteSpace(context.Background(), "spc_1"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/spaces/spc_1" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/spaces/spc_1" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -302,7 +302,7 @@ func TestListAPITokens(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/api-tokens" {
+	if rec.path != "/v1/teams/team_1/api-tokens" {
 		t.Fatalf("path = %q", rec.path)
 	}
 	if page.Items[0].Name != "ci" {
@@ -316,7 +316,7 @@ func TestRevokeAPIToken(t *testing.T) {
 	if err := c.RevokeAPIToken(context.Background(), "tok_9"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/api-tokens/tok_9" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/api-tokens/tok_9" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -349,19 +349,19 @@ func TestDryRunGetter(t *testing.T) {
 }
 
 func TestClientErrorMessageFormat(t *testing.T) {
-	withMsg := &ClientError{Method: "GET", Path: "/devices", StatusCode: 500, Message: "boom"}
-	if got := withMsg.Error(); got != "operator: GET /devices: HTTP 500: boom" {
+	withMsg := &ClientError{Method: "GET", Path: "/v1/teams/team_1/devices", StatusCode: 500, Message: "boom"}
+	if got := withMsg.Error(); got != "operator: GET /v1/teams/team_1/devices: HTTP 500: boom" {
 		t.Fatalf("Error() = %q", got)
 	}
-	noMsg := &ClientError{Method: "DELETE", Path: "/devices/dev_1", StatusCode: 502}
-	if got := noMsg.Error(); got != "operator: DELETE /devices/dev_1: HTTP 502" {
+	noMsg := &ClientError{Method: "DELETE", Path: "/v1/teams/team_1/devices/dev_1", StatusCode: 502}
+	if got := noMsg.Error(); got != "operator: DELETE /v1/teams/team_1/devices/dev_1: HTTP 502" {
 		t.Fatalf("Error() = %q", got)
 	}
 }
 
 func TestDryRunErrorMessageFormat(t *testing.T) {
-	e := &DryRunError{Action: Action{Method: "POST", Path: "/devices"}}
-	if got := e.Error(); got != "dry-run: would POST /devices" {
+	e := &DryRunError{Action: Action{Method: "POST", Path: "/v1/teams/team_1/devices"}}
+	if got := e.Error(); got != "dry-run: would POST /v1/teams/team_1/devices" {
 		t.Fatalf("Error() = %q", got)
 	}
 }

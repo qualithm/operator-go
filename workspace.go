@@ -18,18 +18,27 @@ type ListCapabilitiesInput struct {
 	Key   string
 }
 
-// GetWorkspace returns the caller's current workspace: team, membership, and
-// role context.
+// GetWorkspace returns the team the client acts on (see [WithTeam]), with the caller's
+// membership, role and permissions in it.
 func (c *Client) GetWorkspace(ctx context.Context) (Workspace, error) {
-	var out Workspace
-	err := c.do(ctx, http.MethodGet, "/workspace", nil, &out)
-	return out, err
+	var team Team
+	if err := c.do(ctx, http.MethodGet, "{team}", nil, &team); err != nil {
+		return Workspace{}, err
+	}
+	return Workspace{
+		TeamID:      team.ID,
+		TeamName:    team.Name,
+		MemberID:    team.MemberID,
+		MemberRole:  team.MemberRole,
+		Permissions: team.Permissions,
+		UpdatedAt:   team.UpdatedAt,
+	}, nil
 }
 
 // GetAccount returns the caller's account.
 func (c *Client) GetAccount(ctx context.Context) (Account, error) {
 	var out Account
-	err := c.do(ctx, http.MethodGet, "/account", nil, &out)
+	err := c.do(ctx, http.MethodGet, "/v1/account", nil, &out)
 	return out, err
 }
 
@@ -51,7 +60,7 @@ func (c *Client) ListCapabilities(ctx context.Context, in ListCapabilitiesInput)
 	if in.Key != "" {
 		v.Set("key", in.Key)
 	}
-	path := "/capabilities"
+	path := "{team}/capabilities"
 	if len(v) > 0 {
 		path += "?" + v.Encode()
 	}
@@ -63,14 +72,14 @@ func (c *Client) ListCapabilities(ctx context.Context, in ListCapabilitiesInput)
 // ListRoles returns a page of the caller's team role assignments.
 func (c *Client) ListRoles(ctx context.Context, page, limit int) (Page[RoleAssignment], error) {
 	var out Page[RoleAssignment]
-	err := c.do(ctx, http.MethodGet, "/roles"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "/v1/account/memberships"+pageQuery(page, limit), nil, &out)
 	return out, err
 }
 
 // ListSessions returns a page of the caller's authenticated sessions.
 // ThisDeviceOnly narrows the list to the session the token belongs to.
 func (c *Client) ListSessions(ctx context.Context, page, limit int, thisDeviceOnly bool) (Page[Session], error) {
-	path := "/sessions" + pageQuery(page, limit)
+	path := "/v1/account/sessions" + pageQuery(page, limit)
 	sep := "?"
 	if strings.Contains(path, "?") {
 		sep = "&"
@@ -86,7 +95,7 @@ func (c *Client) ListSessions(ctx context.Context, page, limit int, thisDeviceOn
 // GetSession retrieves a single session by ID.
 func (c *Client) GetSession(ctx context.Context, sessionID string) (Session, error) {
 	var out Session
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/sessions/%s", sessionID), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/account/sessions/%s", sessionID), nil, &out)
 	return out, err
 }
 
@@ -94,7 +103,7 @@ func (c *Client) GetSession(ctx context.Context, sessionID string) (Session, err
 // preferences as a preference-name → enabled map.
 func (c *Client) GetCommunicationPreferences(ctx context.Context) (map[string]bool, error) {
 	var out map[string]bool
-	err := c.do(ctx, http.MethodGet, "/account/communication-preferences", nil, &out)
+	err := c.do(ctx, http.MethodGet, "/v1/account/communication-preferences", nil, &out)
 	return out, err
 }
 
@@ -102,13 +111,13 @@ func (c *Client) GetCommunicationPreferences(ctx context.Context) (map[string]bo
 // each zone's API and gateway endpoints.
 func (c *Client) ListZones(ctx context.Context) (Zones, error) {
 	var out Zones
-	err := c.do(ctx, http.MethodGet, "/zones", nil, &out)
+	err := c.do(ctx, http.MethodGet, "/v1/zones", nil, &out)
 	return out, err
 }
 
-// ListZoneSpaces returns a page of spaces in the given device zone.
+// ListZoneSpaces returns a page of the team's spaces in the given device zone.
 func (c *Client) ListZoneSpaces(ctx context.Context, zone string, page, limit int) (Page[Space], error) {
 	var out Page[Space]
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/zones/%s/spaces", zone)+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/spaces"+filterQuery("zone", zone, page, limit), nil, &out)
 	return out, err
 }
