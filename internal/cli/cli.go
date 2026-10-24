@@ -89,6 +89,7 @@ func Run(ctx context.Context, env Env, args []string) int {
 type common struct {
 	url    string
 	token  string
+	team   string
 	json   bool
 	dryRun bool
 }
@@ -99,6 +100,7 @@ func addCommon(fs *flag.FlagSet) *common {
 	c := &common{}
 	fs.StringVar(&c.url, "url", os.Getenv("QUALITHM_API_URL"), "management API base URL (env QUALITHM_API_URL)")
 	fs.StringVar(&c.token, "token", os.Getenv("QUALITHM_API_TOKEN"), "member API token (env QUALITHM_API_TOKEN)")
+	fs.StringVar(&c.team, "team", os.Getenv("QUALITHM_TEAM"), "team to act on; defaults to the token's team (env QUALITHM_TEAM)")
 	fs.BoolVar(&c.json, "json", false, "emit JSON instead of a human table")
 	fs.BoolVar(&c.dryRun, "dry-run", false, "report the planned change without applying it")
 	return c
@@ -158,6 +160,9 @@ func (c *common) client(env Env) (*operator.Client, int) {
 	}
 	if c.url != "" {
 		opts = append(opts, operator.WithBaseURL(c.url))
+	}
+	if c.team != "" {
+		opts = append(opts, operator.WithTeam(c.team))
 	}
 	client, err := env.NewClient(c.token, opts...)
 	if err != nil {

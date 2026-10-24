@@ -17,7 +17,7 @@ func TestTeams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodGet || rec.path != "/teams" {
+	if rec.method != http.MethodGet || rec.path != "/v1/teams" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 	if len(page.Items) != 1 || page.Items[0].MemberRole != "owner" {
@@ -29,7 +29,7 @@ func TestTeams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/teams" || rec.body != nil {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams" || rec.body != nil {
 		t.Fatalf("request = %s %s body=%v", rec.method, rec.path, rec.body)
 	}
 	if team.ID != "team_2" {
@@ -40,7 +40,7 @@ func TestTeams(t *testing.T) {
 	if _, err := c.GetTeam(context.Background(), "team_2"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/teams/team_2" {
+	if rec.path != "/v1/teams/team_2" {
 		t.Fatalf("path = %q", rec.path)
 	}
 
@@ -56,7 +56,7 @@ func TestTeams(t *testing.T) {
 	if err := c.DeleteTeam(context.Background(), "team_2"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/teams/team_2" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_2" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 
@@ -65,7 +65,7 @@ func TestTeams(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/teams/team_2/device-state" {
+	if rec.path != "/v1/teams/team_2/device-states" {
 		t.Fatalf("path = %q", rec.path)
 	}
 	if len(snaps) != 1 || !snaps[0].Online || snaps[0].Metrics["temp"] != 21.5 {
@@ -80,7 +80,7 @@ func TestMembers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/teams/team_1/members" || len(page.Items) != 1 {
+	if rec.path != "/v1/teams/team_1/members" || len(page.Items) != 1 {
 		t.Fatalf("path = %q page = %+v", rec.path, page)
 	}
 
@@ -97,7 +97,7 @@ func TestMembers(t *testing.T) {
 	if _, err := c.GetTeamMember(context.Background(), "team_1", "mem_1"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/teams/team_1/members/mem_1" {
+	if rec.path != "/v1/teams/team_1/members/mem_1" {
 		t.Fatalf("path = %q", rec.path)
 	}
 
@@ -113,7 +113,7 @@ func TestMembers(t *testing.T) {
 	if err := c.RemoveTeamMember(context.Background(), "team_1", "mem_1"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/teams/team_1/members/mem_1" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/members/mem_1" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 
@@ -122,7 +122,7 @@ func TestMembers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/teams/team_1/invites" || len(invites.Items) != 1 {
+	if rec.path != "/v1/teams/team_1/invites" || len(invites.Items) != 1 {
 		t.Fatalf("path = %q invites = %+v", rec.path, invites)
 	}
 
@@ -139,7 +139,7 @@ func TestMembers(t *testing.T) {
 	if err := c.RevokeTeamInvite(context.Background(), "team_1", "mem_4"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/teams/team_1/invites/mem_4" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/invites/mem_4" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -151,7 +151,7 @@ func TestAutomations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/automations" || len(page.Items) != 1 || !page.Items[0].Enabled {
+	if rec.path != "/v1/teams/team_1/automations" || len(page.Items) != 1 || !page.Items[0].Enabled {
 		t.Fatalf("path = %q page = %+v", rec.path, page)
 	}
 
@@ -164,7 +164,7 @@ func TestAutomations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/automations" {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/automations" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 	if _, ok := rec.body["payload"].(map[string]any)["trigger"]; !ok {
@@ -178,7 +178,7 @@ func TestAutomations(t *testing.T) {
 	if _, err := c.GetAutomation(context.Background(), "auto_2"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/automations/auto_2" {
+	if rec.path != "/v1/teams/team_1/automations/auto_2" {
 		t.Fatalf("path = %q", rec.path)
 	}
 
@@ -194,7 +194,7 @@ func TestAutomations(t *testing.T) {
 	if err := c.DeleteAutomation(context.Background(), "auto_2"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/automations/auto_2" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/automations/auto_2" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 
@@ -203,8 +203,8 @@ func TestAutomations(t *testing.T) {
 		call func(*Client) error
 		path string
 	}{
-		{"enable", func(c *Client) error { _, err := c.EnableAutomation(context.Background(), "auto_2"); return err }, "/automations/auto_2/enable"},
-		{"disable", func(c *Client) error { _, err := c.DisableAutomation(context.Background(), "auto_2"); return err }, "/automations/auto_2/disable"},
+		{"enable", func(c *Client) error { _, err := c.EnableAutomation(context.Background(), "auto_2"); return err }, "/v1/teams/team_1/automations/auto_2/enable"},
+		{"disable", func(c *Client) error { _, err := c.DisableAutomation(context.Background(), "auto_2"); return err }, "/v1/teams/team_1/automations/auto_2/disable"},
 	} {
 		c = recClient(t, 200, `{"data":{"id":"auto_2"}}`, &rec)
 		if err := tc.call(c); err != nil {
@@ -220,7 +220,7 @@ func TestAutomations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/automations/auto_2/run" || run.ID != "run_1" {
+	if rec.path != "/v1/teams/team_1/automations/auto_2/run" || run.ID != "run_1" {
 		t.Fatalf("path = %q run = %+v", rec.path, run)
 	}
 
@@ -229,7 +229,7 @@ func TestAutomations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/automations/auto_2/runs" || rec.query != "limit=5&page=2" || len(runs.Items) != 1 {
+	if rec.path != "/v1/teams/team_1/automations/auto_2/runs" || rec.query != "limit=5&page=2" || len(runs.Items) != 1 {
 		t.Fatalf("path = %q query = %q runs = %+v", rec.path, rec.query, runs)
 	}
 
@@ -237,7 +237,7 @@ func TestAutomations(t *testing.T) {
 	if _, err := c.CreateAutomationFromTemplate(context.Background(), CreateAutomationFromTemplateInput{Name: "T", Template: "tmpl_1", Params: map[string]any{"device": "dev_1"}}); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/automations/from-template" || rec.body["template"] != "tmpl_1" {
+	if rec.path != "/v1/teams/team_1/automations/from-template" || rec.body["template"] != "tmpl_1" {
 		t.Fatalf("path = %q body=%v", rec.path, rec.body)
 	}
 
@@ -246,7 +246,7 @@ func TestAutomations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/devices/dev_1/automation-templates" || len(tmpls) != 1 || tmpls[0].Slots[0].Kind != "device" {
+	if rec.path != "/v1/teams/team_1/devices/dev_1/automation-templates" || len(tmpls) != 1 || tmpls[0].Slots[0].Kind != "device" {
 		t.Fatalf("path = %q tmpls = %+v", rec.path, tmpls)
 	}
 
@@ -255,7 +255,7 @@ func TestAutomations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/automations/auto_2/trigger-secret" || issued.Secret != "s3cr3t" {
+	if rec.path != "/v1/teams/team_1/automations/auto_2/trigger-secret" || issued.Secret != "s3cr3t" {
 		t.Fatalf("path = %q issued = %+v", rec.path, issued)
 	}
 }
@@ -288,7 +288,7 @@ func TestDashboards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/dashboards" || len(page.Items) != 1 || page.Items[0].SpaceID != nil {
+	if rec.path != "/v1/teams/team_1/dashboards" || len(page.Items) != 1 || page.Items[0].SpaceID != nil {
 		t.Fatalf("path = %q page = %+v", rec.path, page)
 	}
 
@@ -305,7 +305,7 @@ func TestDashboards(t *testing.T) {
 	if _, err := c.GetDashboard(context.Background(), "dash_2"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/dashboards/dash_2" {
+	if rec.path != "/v1/teams/team_1/dashboards/dash_2" {
 		t.Fatalf("path = %q", rec.path)
 	}
 
@@ -321,7 +321,7 @@ func TestDashboards(t *testing.T) {
 	if err := c.DeleteDashboard(context.Background(), "dash_2"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/dashboards/dash_2" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/dashboards/dash_2" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -333,7 +333,7 @@ func TestDeviceCommands(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/devices/dev_1/commands" || len(page.Items) != 1 {
+	if rec.path != "/v1/teams/team_1/devices/dev_1/commands" || len(page.Items) != 1 {
 		t.Fatalf("path = %q page = %+v", rec.path, page)
 	}
 
@@ -351,7 +351,7 @@ func TestDeviceCommands(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/devices/dev_1/capabilities" || len(caps) != 1 || caps[0].Type != "onoff" {
+	if rec.path != "/v1/teams/team_1/devices/dev_1/capabilities" || len(caps) != 1 || caps[0].Type != "onoff" {
 		t.Fatalf("path = %q caps = %+v", rec.path, caps)
 	}
 
@@ -366,7 +366,7 @@ func TestDeviceCommands(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", suffix, err)
 		}
-		if rec.method != http.MethodPost || rec.path != "/devices/dev_1/"+suffix {
+		if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/devices/dev_1/"+suffix {
 			t.Fatalf("%s: request = %s %s", suffix, rec.method, rec.path)
 		}
 	}
@@ -379,10 +379,10 @@ func TestObservability(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/telemetry" {
+	if rec.path != "/v1/teams/team_1/devices/dev_1/telemetry" {
 		t.Fatalf("path = %q", rec.path)
 	}
-	for _, want := range []string{"deviceId=dev_1", "metric=temp", "from=1", "to=2", "bucket=60", "agg=max", "fill=locf"} {
+	for _, want := range []string{"metric=temp", "from=1", "to=2", "bucket=60", "agg=max", "fill=locf"} {
 		if !strings.Contains(rec.query, want) {
 			t.Fatalf("query %q missing %q", rec.query, want)
 		}
@@ -396,7 +396,7 @@ func TestObservability(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/usage" || usage.DeviceTotal != 3 || usage.DeviceMax != 10 {
+	if rec.path != "/v1/teams/team_1/usage" || usage.DeviceTotal != 3 || usage.DeviceMax != 10 {
 		t.Fatalf("path = %q usage = %+v", rec.path, usage)
 	}
 
@@ -405,7 +405,7 @@ func TestObservability(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/audit" || len(audit.Items) != 1 || audit.Items[0].Action != "device.create" {
+	if rec.path != "/v1/teams/team_1/audit-events" || len(audit.Items) != 1 || audit.Items[0].Action != "device.create" {
 		t.Fatalf("path = %q audit = %+v", rec.path, audit)
 	}
 }
@@ -457,7 +457,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/workspace" || ws.MemberRole != "owner" {
+	if rec.path != "/v1/teams/team_1" || ws.MemberRole != "owner" {
 		t.Fatalf("path = %q ws = %+v", rec.path, ws)
 	}
 	if !ws.Can("device.write") || ws.Can("billing.manage") {
@@ -469,7 +469,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/account" || acct.Email != "a@b.c" {
+	if rec.path != "/v1/account" || acct.Email != "a@b.c" {
 		t.Fatalf("path = %q account = %+v", rec.path, acct)
 	}
 
@@ -478,7 +478,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/capabilities" || len(caps.Items) != 1 {
+	if rec.path != "/v1/teams/team_1/capabilities" || len(caps.Items) != 1 {
 		t.Fatalf("path = %q caps = %+v", rec.path, caps)
 	}
 	for _, want := range []string{"type=onoff", "tag=lamp", "key=power"} {
@@ -492,7 +492,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/roles" || len(roles.Items) != 1 || roles.Items[0].TeamName != "T" {
+	if rec.path != "/v1/account/memberships" || len(roles.Items) != 1 || roles.Items[0].TeamName != "T" {
 		t.Fatalf("path = %q roles = %+v", rec.path, roles)
 	}
 
@@ -501,7 +501,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/sessions" || !strings.Contains(rec.query, "this_device=true") || len(sessions.Items) != 1 {
+	if rec.path != "/v1/account/sessions" || !strings.Contains(rec.query, "this_device=true") || len(sessions.Items) != 1 {
 		t.Fatalf("path = %q query = %q sessions = %+v", rec.path, rec.query, sessions)
 	}
 
@@ -510,7 +510,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/sessions/ses_1" || sess.UserAgent != "agent" {
+	if rec.path != "/v1/account/sessions/ses_1" || sess.UserAgent != "agent" {
 		t.Fatalf("path = %q session = %+v", rec.path, sess)
 	}
 
@@ -519,7 +519,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/account/communication-preferences" || !prefs["productUpdates"] {
+	if rec.path != "/v1/account/communication-preferences" || !prefs["productUpdates"] {
 		t.Fatalf("path = %q prefs = %+v", rec.path, prefs)
 	}
 
@@ -528,7 +528,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/zones" || len(zones.Zones) != 1 || !zones.Zones[0].Open || zones.Zones[0].Gateway.Port != 8883 {
+	if rec.path != "/v1/zones" || len(zones.Zones) != 1 || !zones.Zones[0].Open || zones.Zones[0].Gateway.Port != 8883 {
 		t.Fatalf("path = %q zones = %+v", rec.path, zones)
 	}
 
@@ -537,7 +537,7 @@ func TestWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/zones/us/spaces" || len(spaces.Items) != 1 {
+	if rec.path != "/v1/teams/team_1/spaces" || rec.query != "zone=us" || len(spaces.Items) != 1 {
 		t.Fatalf("path = %q spaces = %+v", rec.path, spaces)
 	}
 }
@@ -549,7 +549,7 @@ func TestBilling(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/billing/summary" || sum.Tier != "pro" || sum.MonthlyTotal != 106.5 || sum.Usage.Devices.Used != 3 {
+	if rec.path != "/v1/teams/team_1/billing/summary" || sum.Tier != "pro" || sum.MonthlyTotal != 106.5 || sum.Usage.Devices.Used != 3 {
 		t.Fatalf("path = %q summary = %+v", rec.path, sum)
 	}
 
@@ -558,7 +558,7 @@ func TestBilling(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/invoices" || len(invoices.Items) != 1 || invoices.Items[0].TotalC == nil || *invoices.Items[0].TotalC != 2900 {
+	if rec.path != "/v1/teams/team_1/invoices" || len(invoices.Items) != 1 || invoices.Items[0].TotalC == nil || *invoices.Items[0].TotalC != 2900 {
 		t.Fatalf("path = %q invoices = %+v", rec.path, invoices)
 	}
 
@@ -567,7 +567,7 @@ func TestBilling(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/billing/tier/preview" || rec.body["tier"] != "pro" {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/billing/tier/preview" || rec.body["tier"] != "pro" {
 		t.Fatalf("request = %s %s body=%v", rec.method, rec.path, rec.body)
 	}
 	if preview.AmountDue != 1200 || preview.To != "pro" {

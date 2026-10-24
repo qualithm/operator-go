@@ -60,6 +60,7 @@ Every verb accepts the global flags, before or after its positional arguments:
 | ----------- | -------------------- | ------------------------------------------ |
 | `--url`     | `QUALITHM_API_URL`   | management API base URL                    |
 | `--token`   | `QUALITHM_API_TOKEN` | member API token (`qmt_…`)                 |
+| `--team`    | `QUALITHM_TEAM`      | team to act on (defaults to the token's)   |
 | `--json`    | —                    | emit JSON instead of a human table         |
 | `--dry-run` | —                    | report the planned change without applying |
 

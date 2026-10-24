@@ -17,7 +17,7 @@ type CreateEnrollmentInput struct {
 // ListEnrollments returns a page of enrollments for the token's team.
 func (c *Client) ListEnrollments(ctx context.Context, page, limit int) (Page[Enrollment], error) {
 	var out Page[Enrollment]
-	err := c.do(ctx, http.MethodGet, "/enrollments"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/enrollments"+pageQuery(page, limit), nil, &out)
 	return out, err
 }
 
@@ -25,11 +25,11 @@ func (c *Client) ListEnrollments(ctx context.Context, page, limit int) (Page[Enr
 // shown exactly once.
 func (c *Client) CreateEnrollment(ctx context.Context, in CreateEnrollmentInput) (EnrollmentWithCode, error) {
 	var out EnrollmentWithCode
-	err := c.do(ctx, http.MethodPost, "/enrollments", in, &out)
+	err := c.do(ctx, http.MethodPost, "{team}/enrollments", in, &out)
 	return out, err
 }
 
 // RevokeEnrollment revokes a pending enrollment.
 func (c *Client) RevokeEnrollment(ctx context.Context, enrollmentID string) error {
-	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/enrollments/%s", enrollmentID), nil, nil)
+	return c.do(ctx, http.MethodDelete, fmt.Sprintf("{team}/enrollments/%s", enrollmentID), nil, nil)
 }

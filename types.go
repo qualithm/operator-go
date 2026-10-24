@@ -149,8 +149,11 @@ type Team struct {
 	Payload    json.RawMessage `json:"payload"`
 	MemberID   string          `json:"memberId"`
 	MemberRole string          `json:"memberRole"` // "owner" | "manager" | "viewer"
-	CreatedAt  string          `json:"createdAt"`
-	UpdatedAt  string          `json:"updatedAt"`
+	// Permissions is what the caller can do in this team: their role, lowered to a token's
+	// ceiling.
+	Permissions []string `json:"permissions"`
+	CreatedAt   string   `json:"createdAt"`
+	UpdatedAt   string   `json:"updatedAt"`
 }
 
 // Member is a team membership with the member's account context.
@@ -328,9 +331,8 @@ type AuditEvent struct {
 	OccurredAt string          `json:"occurredAt"`
 }
 
-// Workspace is the caller's current workspace context.
+// Workspace is the team a client acts on, with the caller's membership, role and permissions in it.
 type Workspace struct {
-	AccountID  string `json:"accountId"`
 	TeamID     string `json:"teamId"`
 	TeamName   string `json:"teamName"`
 	MemberID   string `json:"memberId"`
