@@ -9,14 +9,14 @@ import (
 // tier, limits, usage per dimension, and add-ons.
 func (c *Client) GetBillingSummary(ctx context.Context) (BillingSummary, error) {
 	var out BillingSummary
-	err := c.do(ctx, http.MethodGet, "/billing/summary", nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/billing/summary", nil, &out)
 	return out, err
 }
 
 // ListInvoices returns a page of the team's invoices.
 func (c *Client) ListInvoices(ctx context.Context, page, limit int) (Page[Invoice], error) {
 	var out Page[Invoice]
-	err := c.do(ctx, http.MethodGet, "/invoices"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/invoices"+pageQuery(page, limit), nil, &out)
 	return out, err
 }
 
@@ -24,6 +24,6 @@ func (c *Client) ListInvoices(ctx context.Context, page, limit int) (Page[Invoic
 // Read-only despite the POST method.
 func (c *Client) PreviewTierChange(ctx context.Context, tier string) (TierChangePreview, error) {
 	var out TierChangePreview
-	err := c.do(ctx, http.MethodPost, "/billing/tier/preview", map[string]string{"tier": tier}, &out)
+	err := c.do(ctx, http.MethodPost, "{team}/billing/tier/preview", map[string]string{"tier": tier}, &out)
 	return out, err
 }

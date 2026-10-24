@@ -76,7 +76,7 @@ func TestAuthorityListJSON(t *testing.T) {
 
 func TestAuthorityCreatePlatform(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		if req.Method != http.MethodPost || req.URL.Path != "/authorities" {
+		if req.Method != http.MethodPost || req.URL.Path != "/v1/teams/team_1/authorities" {
 			t.Fatalf("request = %s %s", req.Method, req.URL.Path)
 		}
 		return jsonResp(201, `{"data":{"id":"aut_1","name":"ca"}}`), nil
@@ -254,7 +254,7 @@ func TestCredentialCert(t *testing.T) {
 		t.Fatal(err)
 	}
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		if req.URL.Path != "/devices/dev_1/credentials/cert" {
+		if req.URL.Path != "/v1/teams/team_1/devices/dev_1/credentials/cert" {
 			t.Fatalf("path = %s", req.URL.Path)
 		}
 		return jsonResp(201, `{"data":{"credential":{"id":"cred_1","deviceId":"dev_1","certFingerprint":"fp"},"certificatePem":"LEAF\n","caCertificatePem":"CA\n"}}`), nil
@@ -342,7 +342,7 @@ func TestCredentialUnknownVerb(t *testing.T) {
 
 func TestDeviceListSpaceScoped(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		if req.URL.Path != "/spaces/spc_1/devices" {
+		if req.URL.Path != "/v1/teams/team_1/devices" || req.URL.Query().Get("spaceId") != "spc_1" {
 			t.Fatalf("path = %s", req.URL.Path)
 		}
 		return jsonResp(200, `{"data":{"current":1,"items":[{"id":"dev_1","spaceId":"spc_1"}],"last":1}}`), nil
@@ -451,7 +451,7 @@ func TestDeviceUnknownVerbAndNoVerb(t *testing.T) {
 
 func TestSpaceList(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		if req.URL.Path != "/spaces" {
+		if req.URL.Path != "/v1/teams/team_1/spaces" {
 			t.Fatalf("path = %s", req.URL.Path)
 		}
 		return jsonResp(200, `{"data":{"current":1,"items":[{"id":"spc_1","name":"edge","zone":"de-fra-a","deviceTotal":3}],"last":1}}`), nil
@@ -466,7 +466,7 @@ func TestSpaceList(t *testing.T) {
 
 func TestSpaceGetTable(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		if req.URL.Path != "/spaces/spc_1" {
+		if req.URL.Path != "/v1/teams/team_1/spaces/spc_1" {
 			t.Fatalf("path = %s", req.URL.Path)
 		}
 		return jsonResp(200, `{"data":{"id":"spc_1","name":"edge","zone":"sg-sin-a","deviceTotal":0}}`), nil
@@ -491,7 +491,7 @@ func TestSpaceGetMissingID(t *testing.T) {
 
 func TestSpaceCreateAndMissingZone(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		if req.Method != http.MethodPost || req.URL.Path != "/spaces" {
+		if req.Method != http.MethodPost || req.URL.Path != "/v1/teams/team_1/spaces" {
 			t.Fatalf("request = %s %s", req.Method, req.URL.Path)
 		}
 		return jsonResp(201, `{"data":{"id":"spc_1","name":"Space abcd1234","zone":"de-fra-a"}}`), nil
@@ -513,7 +513,7 @@ func TestSpaceCreateAndMissingZone(t *testing.T) {
 
 func TestSpaceUpdateAndMissingName(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		if req.Method != http.MethodPatch || req.URL.Path != "/spaces/spc_1" {
+		if req.Method != http.MethodPatch || req.URL.Path != "/v1/teams/team_1/spaces/spc_1" {
 			t.Fatalf("request = %s %s", req.Method, req.URL.Path)
 		}
 		return jsonResp(200, `{"message":"ok"}`), nil
@@ -672,7 +672,7 @@ func TestDryRunHumanShowsBody(t *testing.T) {
 		t.Fatalf("exit = %d", code)
 	}
 	got := out.String()
-	if !strings.Contains(got, "would PATCH /devices/dev_1") || !strings.Contains(got, "body:") {
+	if !strings.Contains(got, "would PATCH /v1/teams/team_1/devices/dev_1") || !strings.Contains(got, "body:") {
 		t.Fatalf("stdout = %q", got)
 	}
 }
@@ -695,10 +695,10 @@ func TestApplyCreatesMissingDevice(t *testing.T) {
 		switch {
 		case req.Method == http.MethodGet:
 			return jsonResp(200, `{"data":{"current":1,"items":[],"last":1}}`), nil
-		case req.Method == http.MethodPost && req.URL.Path == "/devices":
+		case req.Method == http.MethodPost && req.URL.Path == "/v1/teams/team_1/devices":
 			posted = true
 			return jsonResp(201, `{"data":{"id":"dev_new","spaceId":"spc_1"}}`), nil
-		case req.Method == http.MethodPatch && req.URL.Path == "/devices/dev_new":
+		case req.Method == http.MethodPatch && req.URL.Path == "/v1/teams/team_1/devices/dev_new":
 			patched = true
 			return jsonResp(200, `{"message":"ok"}`), nil
 		}

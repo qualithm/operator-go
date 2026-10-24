@@ -33,7 +33,7 @@ func testEnv(fn roundTripFunc) (Env, *bytes.Buffer, *bytes.Buffer) {
 		Stdout: &out,
 		Stderr: &errBuf,
 		NewClient: func(token string, opts ...operator.Option) (*operator.Client, error) {
-			opts = append(opts, operator.WithHTTPClient(&http.Client{Transport: fn}))
+			opts = append(opts, operator.WithHTTPClient(&http.Client{Transport: fn}), operator.WithTeam("team_1"))
 			return operator.New(token, opts...)
 		},
 	}
@@ -42,7 +42,7 @@ func testEnv(fn roundTripFunc) (Env, *bytes.Buffer, *bytes.Buffer) {
 
 func TestCredentialMintJSON(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		if req.Method != http.MethodPost || req.URL.Path != "/devices/dev_1/credentials" {
+		if req.Method != http.MethodPost || req.URL.Path != "/v1/teams/team_1/devices/dev_1/credentials" {
 			t.Fatalf("unexpected request %s %s", req.Method, req.URL.Path)
 		}
 		return jsonResp(201, `{"data":{"credential":{"id":"cred_1","deviceId":"dev_1"},"secret":"qmd_abc"}}`), nil
@@ -65,7 +65,7 @@ func TestEnrollmentCreateDryRun(t *testing.T) {
 	if code != ExitOK {
 		t.Fatalf("exit = %d", code)
 	}
-	if !strings.Contains(out.String(), "dry-run: would POST /enrollments") {
+	if !strings.Contains(out.String(), "dry-run: would POST /v1/teams/team_1/enrollments") {
 		t.Fatalf("stdout = %s", out.String())
 	}
 }

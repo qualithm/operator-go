@@ -21,7 +21,7 @@ func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) { re
 
 func newTestClient(t *testing.T, fn roundTripFunc, opts ...Option) *Client {
 	t.Helper()
-	base := []Option{WithHTTPClient(&http.Client{Transport: fn})}
+	base := []Option{WithHTTPClient(&http.Client{Transport: fn}), WithTeam("team_1")}
 	c, err := New("qmt_sel.ver", append(base, opts...)...)
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -96,7 +96,7 @@ func TestGetDecodesData(t *testing.T) {
 	if gotAuth != "Bearer qmt_sel.ver" {
 		t.Fatalf("auth header = %q", gotAuth)
 	}
-	if gotPath != "/devices?limit=20&page=1" {
+	if gotPath != "/v1/teams/team_1/devices?limit=20&page=1" {
 		t.Fatalf("path = %q", gotPath)
 	}
 	if len(page.Items) != 1 || page.Items[0].ID != "dev_1" {
@@ -186,10 +186,10 @@ func TestDryRunShortCircuitsMutations(t *testing.T) {
 	if called {
 		t.Fatal("mutation should not hit the transport in dry-run")
 	}
-	if dre.Action.Method != http.MethodPost || dre.Action.Path != "/enrollments" {
+	if dre.Action.Method != http.MethodPost || dre.Action.Path != "/v1/teams/team_1/enrollments" {
 		t.Fatalf("unexpected action: %+v", dre.Action)
 	}
-	if recorded.Path != "/enrollments" {
+	if recorded.Path != "/v1/teams/team_1/enrollments" {
 		t.Fatalf("recorder not invoked: %+v", recorded)
 	}
 }
@@ -232,5 +232,40 @@ func TestPageQuery(t *testing.T) {
 		if got != want {
 			t.Errorf("pageQuery = %q, want %q", got, want)
 		}
+	}
+}
+
+func TestTeamIDAsksOnceWhenUnset(t *testing.T) {
+	var calls []string
+	c, err := New("qmt_sel.ver", WithHTTPClient(&http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		calls = append(calls, req.URL.Path)
+		if req.URL.Path == "/v1/teams" {
+			return jsonResponse(200, `{"data":{"current":1,"items":[{"id":"team_9"}],"last":1}}`), nil
+		}
+		return jsonResponse(200, `{"data":{"current":1,"items":[],"last":1}}`), nil
+	})}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		if _, err := c.ListDevices(context.Background(), 0, 0); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want := []string{"/v1/teams", "/v1/teams/team_9/devices", "/v1/teams/team_9/devices"}
+	if strings.Join(calls, " ") != strings.Join(want, " ") {
+		t.Fatalf("calls = %v", calls)
+	}
+}
+
+func TestTeamIDNeedsExactlyOneTeam(t *testing.T) {
+	c, err := New("qmt_sel.ver", WithHTTPClient(&http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return jsonResponse(200, `{"data":{"current":1,"items":[{"id":"a"},{"id":"b"}],"last":1}}`), nil
+	})}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.ListDevices(context.Background(), 0, 0); !errors.Is(err, ErrNoTeam) {
+		t.Fatalf("err = %v, want ErrNoTeam", err)
 	}
 }

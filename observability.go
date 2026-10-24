@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,10 +29,10 @@ type GetTelemetryInput struct {
 
 // GetTelemetry returns bucketed telemetry points for a device metric.
 func (c *Client) GetTelemetry(ctx context.Context, in GetTelemetryInput) ([]TelemetryPoint, error) {
-	v := url.Values{}
-	if in.DeviceID != "" {
-		v.Set("deviceId", in.DeviceID)
+	if in.DeviceID == "" {
+		return nil, errors.New("operator: telemetry needs a device id")
 	}
+	v := url.Values{}
 	if in.Metric != "" {
 		v.Set("metric", in.Metric)
 	}
@@ -50,7 +51,7 @@ func (c *Client) GetTelemetry(ctx context.Context, in GetTelemetryInput) ([]Tele
 	if in.FillLOCF {
 		v.Set("fill", "locf")
 	}
-	path := "/telemetry"
+	path := "{team}/devices/" + url.PathEscape(in.DeviceID) + "/telemetry"
 	if len(v) > 0 {
 		path += "?" + v.Encode()
 	}
@@ -70,7 +71,11 @@ func (c *Client) ReadEvents(ctx context.Context, limit int) ([]Event, error) {
 	if limit <= 0 {
 		limit = 1
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/events/stream", nil)
+	path, err := c.resolvePath(ctx, "{team}/events")
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("operator: build request: %w", err)
 	}
@@ -82,7 +87,7 @@ func (c *Client) ReadEvents(ctx context.Context, limit int) ([]Event, error) {
 
 	res, err := c.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("operator: GET /events/stream: %w", err)
+		return nil, fmt.Errorf("operator: GET %s: %w", path, err)
 	}
 	defer func() { _ = res.Body.Close() }()
 
@@ -94,7 +99,7 @@ func (c *Client) ReadEvents(ctx context.Context, limit int) ([]Event, error) {
 		}
 		return nil, &ClientError{
 			Method:     http.MethodGet,
-			Path:       "/events/stream",
+			Path:       path,
 			StatusCode: res.StatusCode,
 			Message:    env.Message,
 		}
@@ -131,13 +136,13 @@ func (c *Client) ReadEvents(ctx context.Context, limit int) ([]Event, error) {
 // GetUsage returns the team's current usage against its plan limits.
 func (c *Client) GetUsage(ctx context.Context) (Usage, error) {
 	var out Usage
-	err := c.do(ctx, http.MethodGet, "/usage", nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/usage", nil, &out)
 	return out, err
 }
 
 // GetAuditLog returns a page of audit-trail events for the token's team.
 func (c *Client) GetAuditLog(ctx context.Context, page, limit int) (Page[AuditEvent], error) {
 	var out Page[AuditEvent]
-	err := c.do(ctx, http.MethodGet, "/audit"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/audit-events"+pageQuery(page, limit), nil, &out)
 	return out, err
 }
