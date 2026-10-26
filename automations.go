@@ -20,6 +20,7 @@ type CreateAutomationInput struct {
 // template; the API does not accept clearing the space through this client.
 type UpdateAutomationInput struct {
 	Name     string             `json:"name,omitempty"`
+	Enabled  *bool              `json:"enabled,omitempty"`
 	SpaceID  *string            `json:"spaceId,omitempty"`
 	Payload  *AutomationPayload `json:"payload,omitempty"`
 	Template string             `json:"template,omitempty"`
@@ -88,22 +89,24 @@ func (c *Client) DeleteAutomation(ctx context.Context, automationID string) erro
 
 // EnableAutomation enables an automation and returns the updated resource.
 func (c *Client) EnableAutomation(ctx context.Context, automationID string) (Automation, error) {
-	var out Automation
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/automations/%s/enable", automationID), nil, &out)
-	return out, err
+	return c.setAutomationEnabled(ctx, automationID, true)
 }
 
 // DisableAutomation disables an automation and returns the updated resource.
 func (c *Client) DisableAutomation(ctx context.Context, automationID string) (Automation, error) {
+	return c.setAutomationEnabled(ctx, automationID, false)
+}
+
+func (c *Client) setAutomationEnabled(ctx context.Context, automationID string, enabled bool) (Automation, error) {
 	var out Automation
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/automations/%s/disable", automationID), nil, &out)
+	err := c.do(ctx, http.MethodPatch, fmt.Sprintf("{team}/automations/%s", automationID), UpdateAutomationInput{Enabled: &enabled}, &out)
 	return out, err
 }
 
 // RunAutomation queues a manual run of an automation.
 func (c *Client) RunAutomation(ctx context.Context, automationID string) (AutomationRunStarted, error) {
 	var out AutomationRunStarted
-	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/automations/%s/run", automationID), nil, &out)
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/automations/%s/runs", automationID), nil, &out)
 	return out, err
 }
 
@@ -118,7 +121,7 @@ func (c *Client) ListAutomationRuns(ctx context.Context, automationID string, pa
 // template server-side.
 func (c *Client) CreateAutomationFromTemplate(ctx context.Context, in CreateAutomationFromTemplateInput) (Automation, error) {
 	var out Automation
-	err := c.do(ctx, http.MethodPost, "{team}/automations/from-template", in, &out)
+	err := c.do(ctx, http.MethodPost, "{team}/automations", in, &out)
 	return out, err
 }
 

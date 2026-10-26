@@ -41,10 +41,12 @@ func (c *Client) GetDeviceCapabilities(ctx context.Context, deviceID string) ([]
 // ParkDevice parks a device: it stops counting against the active-device
 // limit while its credentials and history survive. Idempotent.
 func (c *Client) ParkDevice(ctx context.Context, deviceID string) error {
-	return c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/devices/%s/park", deviceID), nil, nil)
+	parked := true
+	return c.UpdateDevice(ctx, deviceID, UpdateDeviceInput{Parked: &parked})
 }
 
 // UnparkDevice returns a parked device to active. Idempotent.
 func (c *Client) UnparkDevice(ctx context.Context, deviceID string) error {
-	return c.do(ctx, http.MethodPost, fmt.Sprintf("{team}/devices/%s/unpark", deviceID), nil, nil)
+	parked := false
+	return c.UpdateDevice(ctx, deviceID, UpdateDeviceInput{Parked: &parked})
 }
