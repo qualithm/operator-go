@@ -199,19 +199,19 @@ func TestAutomations(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name string
-		call func(*Client) error
-		path string
+		name    string
+		call    func(*Client) error
+		enabled string
 	}{
-		{"enable", func(c *Client) error { _, err := c.EnableAutomation(context.Background(), "auto_2"); return err }, "/v1/teams/team_1/automations/auto_2/enable"},
-		{"disable", func(c *Client) error { _, err := c.DisableAutomation(context.Background(), "auto_2"); return err }, "/v1/teams/team_1/automations/auto_2/disable"},
+		{"enable", func(c *Client) error { _, err := c.EnableAutomation(context.Background(), "auto_2"); return err }, "true"},
+		{"disable", func(c *Client) error { _, err := c.DisableAutomation(context.Background(), "auto_2"); return err }, "false"},
 	} {
 		c = recClient(t, 200, `{"data":{"id":"auto_2"}}`, &rec)
 		if err := tc.call(c); err != nil {
 			t.Fatalf("%s: %v", tc.name, err)
 		}
-		if rec.method != http.MethodPost || rec.path != tc.path {
-			t.Fatalf("%s: request = %s %s", tc.name, rec.method, rec.path)
+		if rec.method != http.MethodPatch || rec.path != "/v1/teams/team_1/automations/auto_2" || rec.body["enabled"] != (tc.enabled == "true") {
+			t.Fatalf("%s: request = %s %s body=%v", tc.name, rec.method, rec.path, rec.body)
 		}
 	}
 
@@ -220,7 +220,7 @@ func TestAutomations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/automations/auto_2/run" || run.ID != "run_1" {
+	if rec.path != "/v1/teams/team_1/automations/auto_2/runs" || run.ID != "run_1" {
 		t.Fatalf("path = %q run = %+v", rec.path, run)
 	}
 
@@ -237,7 +237,7 @@ func TestAutomations(t *testing.T) {
 	if _, err := c.CreateAutomationFromTemplate(context.Background(), CreateAutomationFromTemplateInput{Name: "T", Template: "tmpl_1", Params: map[string]any{"device": "dev_1"}}); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/automations/from-template" || rec.body["template"] != "tmpl_1" {
+	if rec.path != "/v1/teams/team_1/automations" || rec.body["template"] != "tmpl_1" {
 		t.Fatalf("path = %q body=%v", rec.path, rec.body)
 	}
 
@@ -366,8 +366,8 @@ func TestDeviceCommands(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", suffix, err)
 		}
-		if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/devices/dev_1/"+suffix {
-			t.Fatalf("%s: request = %s %s", suffix, rec.method, rec.path)
+		if rec.method != http.MethodPatch || rec.path != "/v1/teams/team_1/devices/dev_1" || rec.body["parked"] != (suffix == "park") {
+			t.Fatalf("%s: request = %s %s body=%v", suffix, rec.method, rec.path, rec.body)
 		}
 	}
 }
