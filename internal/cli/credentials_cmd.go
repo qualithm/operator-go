@@ -55,7 +55,7 @@ func credentialList(ctx context.Context, env Env, args []string) int {
 		tw := newTable(w)
 		row(tw, "ID", "KIND", "LABEL", "STATUS", "EXPIRES")
 		for _, cr := range res {
-			row(tw, cr.ID, cr.Kind, dash(cr.Label), cr.Status, dash(cr.ExpiresAt))
+			row(tw, cr.ID, cr.Kind, dash(cr.Label), cr.Status, when(cr.ExpiresAt))
 		}
 		_ = tw.Flush()
 	}, err)
@@ -66,12 +66,16 @@ func credentialMint(ctx context.Context, env Env, args []string) int {
 	cf := addCommon(fs)
 	device := fs.String("device", "", "device id (required)")
 	label := fs.String("label", "", "credential label")
-	expires := fs.String("expires-at", "", "ISO 8601 expiry timestamp")
+	expires := fs.String("expires-at", "", "expiry time, RFC 3339")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
 	}
 	if *device == "" {
 		_, _ = fmt.Fprintln(env.Stderr, "qualithm: --device is required")
+		return ExitUsage
+	}
+	expiresAt, valid := parseExpiresAt(env, *expires)
+	if !valid {
 		return ExitUsage
 	}
 	client, code := cf.client(env)
@@ -80,7 +84,7 @@ func credentialMint(ctx context.Context, env Env, args []string) int {
 	}
 	res, err := client.MintCredential(ctx, *device, operator.MintCredentialInput{
 		Label:     *label,
-		ExpiresAt: *expires,
+		ExpiresAt: expiresAt,
 	})
 	return cf.report(env, res, func(w io.Writer) {
 		_, _ = fmt.Fprintf(w, "credential %s minted for device %s\n", res.Credential.ID, res.Credential.DeviceID)
@@ -130,7 +134,7 @@ func credentialRotate(ctx context.Context, env Env, args []string) int {
 	device := fs.String("device", "", "device id (required)")
 	credential := fs.String("credential", "", "credential id to rotate (required)")
 	label := fs.String("label", "", "new credential label")
-	expires := fs.String("expires-at", "", "ISO 8601 expiry timestamp")
+	expires := fs.String("expires-at", "", "expiry time, RFC 3339")
 	revoke := fs.Bool("revoke", false, "revoke the old credential immediately")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
@@ -139,13 +143,17 @@ func credentialRotate(ctx context.Context, env Env, args []string) int {
 		_, _ = fmt.Fprintln(env.Stderr, "qualithm: --device and --credential are required")
 		return ExitUsage
 	}
+	expiresAt, valid := parseExpiresAt(env, *expires)
+	if !valid {
+		return ExitUsage
+	}
 	client, code := cf.client(env)
 	if code >= 0 {
 		return code
 	}
 	res, err := client.RotateCredential(ctx, *device, *credential, operator.MintCredentialInput{
 		Label:     *label,
-		ExpiresAt: *expires,
+		ExpiresAt: expiresAt,
 	}, *revoke)
 	return cf.report(env, res, func(w io.Writer) {
 		_, _ = fmt.Fprintf(w, "credential rotated: %s -> %s\n", res.Credential.RotatedFrom, res.Credential.ID)

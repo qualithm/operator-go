@@ -1,6 +1,9 @@
 package operator
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 // Page is the standard paginated list envelope. Items may be nil in sparse
 // pages, matching the API's `(T | undefined)[]` shape.
@@ -20,8 +23,8 @@ type Authority struct {
 	Fingerprint    string          `json:"fingerprint"`
 	Status         string          `json:"status"` // "active" | "revoked"
 	Payload        json.RawMessage `json:"payload"`
-	CreatedAt      string          `json:"createdAt"`
-	UpdatedAt      string          `json:"updatedAt"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
 }
 
 // Enrollment is a one-time device enrollment code record.
@@ -32,11 +35,11 @@ type Enrollment struct {
 	Label           string          `json:"label"`
 	Status          string          `json:"status"` // "pending" | "claimed" | ...
 	ClaimedDeviceID string          `json:"claimedDeviceId"`
-	ClaimedAt       string          `json:"claimedAt"`
-	ExpiresAt       string          `json:"expiresAt"`
+	ClaimedAt       time.Time       `json:"claimedAt"`
+	ExpiresAt       time.Time       `json:"expiresAt"`
 	Payload         json.RawMessage `json:"payload"`
-	CreatedAt       string          `json:"createdAt"`
-	UpdatedAt       string          `json:"updatedAt"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
 }
 
 // EnrollmentWithCode is returned by [Client.CreateEnrollment]. Code is the
@@ -56,12 +59,12 @@ type Credential struct {
 	CertSubject     string          `json:"certSubject"`
 	Label           string          `json:"label"`
 	Status          string          `json:"status"` // "active" | "revoked"
-	ExpiresAt       string          `json:"expiresAt"`
-	LastUsedAt      string          `json:"lastUsedAt"`
+	ExpiresAt       time.Time       `json:"expiresAt"`
+	LastUsedAt      time.Time       `json:"lastUsedAt"`
 	RotatedFrom     string          `json:"rotatedFrom"`
 	Payload         json.RawMessage `json:"payload"`
-	CreatedAt       string          `json:"createdAt"`
-	UpdatedAt       string          `json:"updatedAt"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
 }
 
 // CredentialWithSecret is returned when minting or rotating a token
@@ -87,8 +90,8 @@ type Device struct {
 	TeamID    string          `json:"teamId"`
 	SpaceName string          `json:"spaceName"`
 	Payload   json.RawMessage `json:"payload"`
-	CreatedAt string          `json:"createdAt"`
-	UpdatedAt string          `json:"updatedAt"`
+	CreatedAt time.Time       `json:"createdAt"`
+	UpdatedAt time.Time       `json:"updatedAt"`
 }
 
 // Space is a space resource: the zone-scoped container devices live in.
@@ -99,8 +102,8 @@ type Space struct {
 	Payload     json.RawMessage `json:"payload"`
 	Zone        string          `json:"zone"`
 	DeviceTotal int             `json:"deviceTotal"`
-	CreatedAt   string          `json:"createdAt"`
-	UpdatedAt   string          `json:"updatedAt"`
+	CreatedAt   time.Time       `json:"createdAt"`
+	UpdatedAt   time.Time       `json:"updatedAt"`
 }
 
 // GatewayEndpoint is where a device connects: a zone's MQTT gateway.
@@ -135,11 +138,11 @@ type APIToken struct {
 	Status    string `json:"status"`
 	// Role is the token's ceiling: "owner" | "manager" | "viewer". Empty means the creator's
 	// current role (tokens made before ceilings).
-	Role       string `json:"role"`
-	ExpiresAt  string `json:"expiresAt"`
-	LastUsedAt string `json:"lastUsedAt"`
-	CreatedAt  string `json:"createdAt"`
-	UpdatedAt  string `json:"updatedAt"`
+	Role       string    `json:"role"`
+	ExpiresAt  time.Time `json:"expiresAt"`
+	LastUsedAt time.Time `json:"lastUsedAt"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
 // Team is a team resource with the caller's membership context.
@@ -151,23 +154,23 @@ type Team struct {
 	MemberRole string          `json:"memberRole"` // "owner" | "manager" | "viewer"
 	// Permissions is what the caller can do in this team: their role, lowered to a token's
 	// ceiling.
-	Permissions []string `json:"permissions"`
-	CreatedAt   string   `json:"createdAt"`
-	UpdatedAt   string   `json:"updatedAt"`
+	Permissions []string  `json:"permissions"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 // Member is a team membership with the member's account context.
 type Member struct {
-	ID           string `json:"id"`
-	AccountID    string `json:"accountId"`
-	TeamID       string `json:"teamId"`
-	Role         string `json:"role"`   // "owner" | "manager" | "viewer"
-	Status       string `json:"status"` // "active" | "invited"
-	AccountEmail string `json:"accountEmail"`
-	AccountName  string `json:"accountName"`
-	TeamName     string `json:"teamName"`
-	CreatedAt    string `json:"createdAt"`
-	UpdatedAt    string `json:"updatedAt"`
+	ID           string    `json:"id"`
+	AccountID    string    `json:"accountId"`
+	TeamID       string    `json:"teamId"`
+	Role         string    `json:"role"`   // "owner" | "manager" | "viewer"
+	Status       string    `json:"status"` // "active" | "invited"
+	AccountEmail string    `json:"accountEmail"`
+	AccountName  string    `json:"accountName"`
+	TeamName     string    `json:"teamName"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 // AutomationTrigger is the firing condition of an automation.
@@ -209,8 +212,8 @@ type Automation struct {
 	Payload       AutomationPayload `json:"payload"`
 	SpaceName     *string           `json:"spaceName"`
 	TemplateDrift bool              `json:"templateDrift,omitempty"`
-	CreatedAt     string            `json:"createdAt"`
-	UpdatedAt     string            `json:"updatedAt"`
+	CreatedAt     time.Time         `json:"createdAt"`
+	UpdatedAt     time.Time         `json:"updatedAt"`
 }
 
 // AutomationRunStep records the outcome of one chain step in a run.
@@ -231,8 +234,8 @@ type AutomationRun struct {
 	Status       string              `json:"status"` // "pending" | "succeeded" | "failed" | "skipped" | "limited"
 	Steps        []AutomationRunStep `json:"steps"`
 	LastError    *string             `json:"lastError"`
-	TriggeredAt  string              `json:"triggeredAt"`
-	ExecutedAt   *string             `json:"executedAt"`
+	TriggeredAt  time.Time           `json:"triggeredAt"`
+	ExecutedAt   *time.Time          `json:"executedAt"`
 }
 
 // AutomationTemplate is one entry of the platform-owned automation catalogue.
@@ -260,20 +263,20 @@ type Dashboard struct {
 	Name      string          `json:"name"`
 	Payload   json.RawMessage `json:"payload"`
 	SpaceName *string         `json:"spaceName"`
-	CreatedAt string          `json:"createdAt"`
-	UpdatedAt string          `json:"updatedAt"`
+	CreatedAt time.Time       `json:"createdAt"`
+	UpdatedAt time.Time       `json:"updatedAt"`
 }
 
 // DeviceCommandSummary is the customer-facing view of one command delivery.
 type DeviceCommandSummary struct {
-	ID         string  `json:"id"`
-	DeviceID   string  `json:"deviceId"`
-	Source     string  `json:"source"` // "automation" | "dashboard" | "api"
-	Topic      string  `json:"topic"`
-	Status     string  `json:"status"` // "pending" | "sent" | "failed"
-	LastError  *string `json:"lastError"`
-	EnqueuedAt string  `json:"enqueuedAt"`
-	SettledAt  *string `json:"settledAt"`
+	ID         string     `json:"id"`
+	DeviceID   string     `json:"deviceId"`
+	Source     string     `json:"source"` // "automation" | "dashboard" | "api"
+	Topic      string     `json:"topic"`
+	Status     string     `json:"status"` // "pending" | "sent" | "failed"
+	LastError  *string    `json:"lastError"`
+	EnqueuedAt time.Time  `json:"enqueuedAt"`
+	SettledAt  *time.Time `json:"settledAt"`
 }
 
 // DeviceCommandQueued is returned by [Client.SendDeviceCommand]. Duplicate
@@ -300,7 +303,7 @@ type DeviceStateSnapshot struct {
 	DeviceID   string             `json:"deviceId"`
 	SpaceID    string             `json:"spaceId"`
 	Online     bool               `json:"online"`
-	LastSeenAt int64              `json:"lastSeenAt"` // epoch milliseconds
+	LastSeenAt time.Time          `json:"lastSeenAt"`
 	Metrics    map[string]float64 `json:"metrics"`
 }
 
@@ -328,7 +331,7 @@ type AuditEvent struct {
 	TargetKind string          `json:"targetKind"`
 	TargetID   string          `json:"targetId"`
 	Metadata   json.RawMessage `json:"metadata"`
-	OccurredAt string          `json:"occurredAt"`
+	OccurredAt time.Time       `json:"occurredAt"`
 }
 
 // Workspace is the team a client acts on, with the caller's membership, role and permissions in it.
@@ -339,8 +342,8 @@ type Workspace struct {
 	MemberRole string `json:"memberRole"`
 	// Permissions is what the caller can do here, as catalogue names such as "device.write": their
 	// role, lowered to a token's ceiling.
-	Permissions []string `json:"permissions"`
-	UpdatedAt   string   `json:"updatedAt"`
+	Permissions []string  `json:"permissions"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 // Can reports whether the caller holds a permission in this workspace.
@@ -359,32 +362,32 @@ type Account struct {
 	Email     string          `json:"email"`
 	Name      string          `json:"name"`
 	Payload   json.RawMessage `json:"payload"`
-	CreatedAt string          `json:"createdAt"`
-	UpdatedAt string          `json:"updatedAt"`
+	CreatedAt time.Time       `json:"createdAt"`
+	UpdatedAt time.Time       `json:"updatedAt"`
 }
 
 // RoleAssignment is one of the caller's team roles.
 type RoleAssignment struct {
-	ID        string `json:"id"`
-	AccountID string `json:"accountId"`
-	TeamID    string `json:"teamId"`
-	Role      string `json:"role"`
-	TeamName  string `json:"teamName"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	ID        string    `json:"id"`
+	AccountID string    `json:"accountId"`
+	TeamID    string    `json:"teamId"`
+	Role      string    `json:"role"`
+	TeamName  string    `json:"teamName"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // Session is one of the caller's authenticated sessions.
 type Session struct {
-	ID          string `json:"id"`
-	AccountID   string `json:"accountId"`
-	UserAgent   string `json:"userAgent"`
-	IPAddress   string `json:"ipAddress"`
-	MFAVerified bool   `json:"mfaVerified"`
-	ThisDevice  bool   `json:"thisDevice"`
-	CreatedAt   string `json:"createdAt"`
-	LastUsedAt  string `json:"lastUsedAt"`
-	ExpiresAt   string `json:"expiresAt"`
+	ID          string    `json:"id"`
+	AccountID   string    `json:"accountId"`
+	UserAgent   string    `json:"userAgent"`
+	IPAddress   string    `json:"ipAddress"`
+	MFAVerified bool      `json:"mfaVerified"`
+	ThisDevice  bool      `json:"thisDevice"`
+	CreatedAt   time.Time `json:"createdAt"`
+	LastUsedAt  time.Time `json:"lastUsedAt"`
+	ExpiresAt   time.Time `json:"expiresAt"`
 }
 
 // BillingUsageDimension is one metered dimension's usage against its limit.
@@ -395,13 +398,19 @@ type BillingUsageDimension struct {
 	Buffer *int `json:"buffer"`
 }
 
+// Money is an amount in a currency's minor units, with its ISO 4217 code.
+type Money struct {
+	Amount   int64  `json:"amount"`   // minor units, e.g. cents; negative for a credit
+	Currency string `json:"currency"` // ISO 4217, e.g. "USD"
+}
+
 // BillingSummary is the team's billing state for the current month.
 type BillingSummary struct {
-	Tier         string  `json:"tier"`
-	MonthlyTotal float64 `json:"monthlyTotal"` // USD; add-on prices make it fractional
-	Month        string  `json:"month"`        // YYYY-MM, UTC
+	Tier         string `json:"tier"`
+	MonthlyTotal Money  `json:"monthlyTotal"`
+	Month        string `json:"month"` // YYYY-MM, UTC
 	LimitGrace   *struct {
-		EndsAt string `json:"endsAt"`
+		EndsAt time.Time `json:"endsAt"`
 	} `json:"limitGrace"`
 	Limits struct {
 		Devices           int `json:"devices"`
@@ -427,19 +436,17 @@ type Invoice struct {
 	ID        string          `json:"id"`
 	TeamID    string          `json:"teamId"`
 	Status    string          `json:"status"`
-	TotalC    *int64          `json:"totalC"` // minor units
-	Currency  *string         `json:"currency"`
+	Total     *Money          `json:"total"` // nil until the invoice has a total
 	Payload   json.RawMessage `json:"payload"`
-	CreatedAt string          `json:"createdAt"`
-	UpdatedAt string          `json:"updatedAt"`
+	CreatedAt time.Time       `json:"createdAt"`
+	UpdatedAt time.Time       `json:"updatedAt"`
 }
 
 // TierChangePreview is what a tier change would cost, before it is confirmed.
 type TierChangePreview struct {
 	From               string `json:"from"`
 	To                 string `json:"to"`
-	AmountDue          int    `json:"amountDue"`
-	Currency           string `json:"currency"`
+	AmountDue          Money  `json:"amountDue"`
 	NextPaymentAttempt *int64 `json:"nextPaymentAttempt"`
 }
 

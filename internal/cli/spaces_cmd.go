@@ -82,7 +82,7 @@ func spaceGet(ctx context.Context, env Env, args []string) int {
 		row(tw, "name", res.Name)
 		row(tw, "zone", res.Zone)
 		row(tw, "deviceTotal", fmt.Sprint(res.DeviceTotal))
-		row(tw, "createdAt", dash(res.CreatedAt))
+		row(tw, "createdAt", when(res.CreatedAt))
 		_ = tw.Flush()
 	}, err)
 }

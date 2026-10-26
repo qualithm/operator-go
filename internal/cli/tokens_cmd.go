@@ -54,7 +54,7 @@ func tokenList(ctx context.Context, env Env, args []string) int {
 			if role == "" {
 				role = "your role"
 			}
-			row(tw, t.ID, dash(t.Name), role, t.Status, dash(t.ExpiresAt), dash(t.LastUsedAt))
+			row(tw, t.ID, dash(t.Name), role, t.Status, when(t.ExpiresAt), when(t.LastUsedAt))
 		}
 		_ = tw.Flush()
 	}, err)

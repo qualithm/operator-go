@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // GetTelemetryInput selects the telemetry series to read. From and To are
@@ -20,8 +21,8 @@ import (
 type GetTelemetryInput struct {
 	DeviceID string
 	Metric   string
-	From     int64
-	To       int64
+	From     time.Time
+	To       time.Time
 	Bucket   int
 	Agg      string
 	FillLOCF bool
@@ -36,11 +37,11 @@ func (c *Client) GetTelemetry(ctx context.Context, in GetTelemetryInput) ([]Tele
 	if in.Metric != "" {
 		v.Set("metric", in.Metric)
 	}
-	if in.From != 0 {
-		v.Set("from", fmt.Sprint(in.From))
+	if !in.From.IsZero() {
+		v.Set("from", in.From.UTC().Format(time.RFC3339Nano))
 	}
-	if in.To != 0 {
-		v.Set("to", fmt.Sprint(in.To))
+	if !in.To.IsZero() {
+		v.Set("to", in.To.UTC().Format(time.RFC3339Nano))
 	}
 	if in.Bucket > 0 {
 		v.Set("bucket", fmt.Sprint(in.Bucket))
