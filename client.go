@@ -259,6 +259,13 @@ func (c *Client) doAuth(ctx context.Context, method, path string, body, out any,
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
+	if method == http.MethodPost {
+		key, err := idempotencyKey(ctx)
+		if err != nil {
+			return err
+		}
+		req.Header.Set(IdempotencyHeader, key)
+	}
 
 	res, err := c.http.Do(req)
 	if err != nil {
