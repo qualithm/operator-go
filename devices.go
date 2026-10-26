@@ -16,6 +16,9 @@ type CreateDeviceInput struct {
 type UpdateDeviceInput struct {
 	Name    string `json:"name,omitempty"`
 	SpaceID string `json:"spaceId,omitempty"`
+	// Parked, when set, parks or unparks the device: a parked device can't
+	// connect and doesn't count against the plan's active-device limit.
+	Parked *bool `json:"parked,omitempty"`
 }
 
 // ListDevices returns a page of devices for the token's team.

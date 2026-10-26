@@ -89,7 +89,7 @@ func deviceGet(ctx context.Context, env Env, args []string) int {
 		row(tw, "name", dash(res.Name))
 		row(tw, "space", res.SpaceID)
 		row(tw, "spaceName", dash(res.SpaceName))
-		row(tw, "createdAt", dash(res.CreatedAt))
+		row(tw, "createdAt", when(res.CreatedAt))
 		_ = tw.Flush()
 	}, err)
 }

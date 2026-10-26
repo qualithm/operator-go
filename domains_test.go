@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTeams(t *testing.T) {
@@ -60,7 +61,7 @@ func TestTeams(t *testing.T) {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 
-	c = recClient(t, 200, `{"data":{"items":[{"deviceId":"dev_1","online":true,"lastSeenAt":123,"metrics":{"temp":21.5}}]}}`, &rec)
+	c = recClient(t, 200, `{"data":{"items":[{"deviceId":"dev_1","online":true,"lastSeenAt":"2026-10-01T00:00:00.123Z","metrics":{"temp":21.5}}]}}`, &rec)
 	snaps, err := c.GetTeamDeviceState(context.Background(), "team_2")
 	if err != nil {
 		t.Fatal(err)
@@ -199,19 +200,19 @@ func TestAutomations(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name string
-		call func(*Client) error
-		path string
+		name    string
+		call    func(*Client) error
+		enabled string
 	}{
-		{"enable", func(c *Client) error { _, err := c.EnableAutomation(context.Background(), "auto_2"); return err }, "/v1/teams/team_1/automations/auto_2/enable"},
-		{"disable", func(c *Client) error { _, err := c.DisableAutomation(context.Background(), "auto_2"); return err }, "/v1/teams/team_1/automations/auto_2/disable"},
+		{"enable", func(c *Client) error { _, err := c.EnableAutomation(context.Background(), "auto_2"); return err }, "true"},
+		{"disable", func(c *Client) error { _, err := c.DisableAutomation(context.Background(), "auto_2"); return err }, "false"},
 	} {
 		c = recClient(t, 200, `{"data":{"id":"auto_2"}}`, &rec)
 		if err := tc.call(c); err != nil {
 			t.Fatalf("%s: %v", tc.name, err)
 		}
-		if rec.method != http.MethodPost || rec.path != tc.path {
-			t.Fatalf("%s: request = %s %s", tc.name, rec.method, rec.path)
+		if rec.method != http.MethodPatch || rec.path != "/v1/teams/team_1/automations/auto_2" || rec.body["enabled"] != (tc.enabled == "true") {
+			t.Fatalf("%s: request = %s %s body=%v", tc.name, rec.method, rec.path, rec.body)
 		}
 	}
 
@@ -220,7 +221,7 @@ func TestAutomations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/automations/auto_2/run" || run.ID != "run_1" {
+	if rec.path != "/v1/teams/team_1/automations/auto_2/runs" || run.ID != "run_1" {
 		t.Fatalf("path = %q run = %+v", rec.path, run)
 	}
 
@@ -237,7 +238,7 @@ func TestAutomations(t *testing.T) {
 	if _, err := c.CreateAutomationFromTemplate(context.Background(), CreateAutomationFromTemplateInput{Name: "T", Template: "tmpl_1", Params: map[string]any{"device": "dev_1"}}); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/automations/from-template" || rec.body["template"] != "tmpl_1" {
+	if rec.path != "/v1/teams/team_1/automations" || rec.body["template"] != "tmpl_1" {
 		t.Fatalf("path = %q body=%v", rec.path, rec.body)
 	}
 
@@ -366,8 +367,8 @@ func TestDeviceCommands(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", suffix, err)
 		}
-		if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/devices/dev_1/"+suffix {
-			t.Fatalf("%s: request = %s %s", suffix, rec.method, rec.path)
+		if rec.method != http.MethodPatch || rec.path != "/v1/teams/team_1/devices/dev_1" || rec.body["parked"] != (suffix == "park") {
+			t.Fatalf("%s: request = %s %s body=%v", suffix, rec.method, rec.path, rec.body)
 		}
 	}
 }
@@ -375,14 +376,14 @@ func TestDeviceCommands(t *testing.T) {
 func TestObservability(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"items":[{"ts":1000,"value":2.5}]}}`, &rec)
-	pts, err := c.GetTelemetry(context.Background(), GetTelemetryInput{DeviceID: "dev_1", Metric: "temp", From: 1, To: 2, Bucket: 60, Agg: "max", FillLOCF: true})
+	pts, err := c.GetTelemetry(context.Background(), GetTelemetryInput{DeviceID: "dev_1", Metric: "temp", From: time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC), To: time.Date(2026, 10, 1, 1, 0, 0, 0, time.UTC), Bucket: 60, Agg: "max", FillLOCF: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if rec.path != "/v1/teams/team_1/devices/dev_1/telemetry" {
 		t.Fatalf("path = %q", rec.path)
 	}
-	for _, want := range []string{"metric=temp", "from=1", "to=2", "bucket=60", "agg=max", "fill=locf"} {
+	for _, want := range []string{"metric=temp", "from=2026-10-01T00%3A00%3A00Z", "to=2026-10-01T01%3A00%3A00Z", "bucket=60", "agg=max", "fill=locf"} {
 		if !strings.Contains(rec.query, want) {
 			t.Fatalf("query %q missing %q", rec.query, want)
 		}
@@ -544,25 +545,25 @@ func TestWorkspace(t *testing.T) {
 
 func TestBilling(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 200, `{"data":{"tier":"pro","monthlyTotal":106.5,"month":"2026-08","usage":{"devices":{"used":3,"limit":50}}}}`, &rec)
+	c := recClient(t, 200, `{"data":{"tier":"pro","monthlyTotal":{"amount":10650,"currency":"USD"},"month":"2026-08","usage":{"devices":{"used":3,"limit":50}}}}`, &rec)
 	sum, err := c.GetBillingSummary(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/billing/summary" || sum.Tier != "pro" || sum.MonthlyTotal != 106.5 || sum.Usage.Devices.Used != 3 {
+	if rec.path != "/v1/teams/team_1/billing/summary" || sum.Tier != "pro" || sum.MonthlyTotal != (Money{Amount: 10650, Currency: "USD"}) || sum.Usage.Devices.Used != 3 {
 		t.Fatalf("path = %q summary = %+v", rec.path, sum)
 	}
 
-	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid","totalC":2900}],"last":1}}`, &rec)
+	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid","total":{"amount":2900,"currency":"USD"}}],"last":1}}`, &rec)
 	invoices, err := c.ListInvoices(context.Background(), 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/invoices" || len(invoices.Items) != 1 || invoices.Items[0].TotalC == nil || *invoices.Items[0].TotalC != 2900 {
+	if rec.path != "/v1/teams/team_1/invoices" || len(invoices.Items) != 1 || invoices.Items[0].Total == nil || *invoices.Items[0].Total != (Money{Amount: 2900, Currency: "USD"}) {
 		t.Fatalf("path = %q invoices = %+v", rec.path, invoices)
 	}
 
-	c = recClient(t, 200, `{"data":{"from":"starter","to":"pro","amountDue":1200,"currency":"usd"}}`, &rec)
+	c = recClient(t, 200, `{"data":{"from":"starter","to":"pro","amountDue":{"amount":1200,"currency":"USD"}}}`, &rec)
 	preview, err := c.PreviewTierChange(context.Background(), "pro")
 	if err != nil {
 		t.Fatal(err)
@@ -570,7 +571,7 @@ func TestBilling(t *testing.T) {
 	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/billing/tier/preview" || rec.body["tier"] != "pro" {
 		t.Fatalf("request = %s %s body=%v", rec.method, rec.path, rec.body)
 	}
-	if preview.AmountDue != 1200 || preview.To != "pro" {
+	if preview.AmountDue != (Money{Amount: 1200, Currency: "USD"}) || preview.To != "pro" {
 		t.Fatalf("preview = %+v", preview)
 	}
 }
