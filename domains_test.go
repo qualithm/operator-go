@@ -544,25 +544,25 @@ func TestWorkspace(t *testing.T) {
 
 func TestBilling(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 200, `{"data":{"tier":"pro","monthlyTotal":106.5,"month":"2026-08","usage":{"devices":{"used":3,"limit":50}}}}`, &rec)
+	c := recClient(t, 200, `{"data":{"tier":"pro","monthlyTotal":{"amount":10650,"currency":"USD"},"month":"2026-08","usage":{"devices":{"used":3,"limit":50}}}}`, &rec)
 	sum, err := c.GetBillingSummary(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/billing/summary" || sum.Tier != "pro" || sum.MonthlyTotal != 106.5 || sum.Usage.Devices.Used != 3 {
+	if rec.path != "/v1/teams/team_1/billing/summary" || sum.Tier != "pro" || sum.MonthlyTotal != (Money{Amount: 10650, Currency: "USD"}) || sum.Usage.Devices.Used != 3 {
 		t.Fatalf("path = %q summary = %+v", rec.path, sum)
 	}
 
-	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid","totalC":2900}],"last":1}}`, &rec)
+	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid","total":{"amount":2900,"currency":"USD"}}],"last":1}}`, &rec)
 	invoices, err := c.ListInvoices(context.Background(), 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/invoices" || len(invoices.Items) != 1 || invoices.Items[0].TotalC == nil || *invoices.Items[0].TotalC != 2900 {
+	if rec.path != "/v1/teams/team_1/invoices" || len(invoices.Items) != 1 || invoices.Items[0].Total == nil || *invoices.Items[0].Total != (Money{Amount: 2900, Currency: "USD"}) {
 		t.Fatalf("path = %q invoices = %+v", rec.path, invoices)
 	}
 
-	c = recClient(t, 200, `{"data":{"from":"starter","to":"pro","amountDue":1200,"currency":"usd"}}`, &rec)
+	c = recClient(t, 200, `{"data":{"from":"starter","to":"pro","amountDue":{"amount":1200,"currency":"USD"}}}`, &rec)
 	preview, err := c.PreviewTierChange(context.Background(), "pro")
 	if err != nil {
 		t.Fatal(err)
@@ -570,7 +570,7 @@ func TestBilling(t *testing.T) {
 	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/billing/tier/preview" || rec.body["tier"] != "pro" {
 		t.Fatalf("request = %s %s body=%v", rec.method, rec.path, rec.body)
 	}
-	if preview.AmountDue != 1200 || preview.To != "pro" {
+	if preview.AmountDue != (Money{Amount: 1200, Currency: "USD"}) || preview.To != "pro" {
 		t.Fatalf("preview = %+v", preview)
 	}
 }
