@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // MintCredentialInput is the request body for [Client.MintCredential] and
@@ -11,7 +12,7 @@ import (
 type MintCredentialInput struct {
 	Label string `json:"label,omitempty"`
 	// ExpiresAt is an optional ISO 8601 timestamp in the future.
-	ExpiresAt string `json:"expiresAt,omitempty"`
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 }
 
 // IssueCertInput is the request body for [Client.IssueCert].

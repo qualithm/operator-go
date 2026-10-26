@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"text/tabwriter"
+	"time"
 )
 
 // newTable returns a tabwriter configured for the CLI's aligned columns.
@@ -17,6 +18,27 @@ func dash(s string) string {
 		return "-"
 	}
 	return s
+}
+
+// when renders a time for a table: RFC 3339 in UTC, or "-" when unset.
+func when(t time.Time) string {
+	if t.IsZero() {
+		return "-"
+	}
+	return t.UTC().Format(time.RFC3339)
+}
+
+// parseExpiresAt reads the --expires-at flag as RFC 3339; an empty value is no expiry.
+func parseExpiresAt(env Env, value string) (*time.Time, bool) {
+	if value == "" {
+		return nil, true
+	}
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		_, _ = fmt.Fprintln(env.Stderr, "qualithm: --expires-at must be an RFC 3339 time, like 2026-12-31T00:00:00Z")
+		return nil, false
+	}
+	return &t, true
 }
 
 // row writes a tab-separated line to the tabwriter.

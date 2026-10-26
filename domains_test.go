@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTeams(t *testing.T) {
@@ -60,7 +61,7 @@ func TestTeams(t *testing.T) {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 
-	c = recClient(t, 200, `{"data":{"items":[{"deviceId":"dev_1","online":true,"lastSeenAt":123,"metrics":{"temp":21.5}}]}}`, &rec)
+	c = recClient(t, 200, `{"data":{"items":[{"deviceId":"dev_1","online":true,"lastSeenAt":"2026-10-01T00:00:00.123Z","metrics":{"temp":21.5}}]}}`, &rec)
 	snaps, err := c.GetTeamDeviceState(context.Background(), "team_2")
 	if err != nil {
 		t.Fatal(err)
@@ -375,14 +376,14 @@ func TestDeviceCommands(t *testing.T) {
 func TestObservability(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"items":[{"ts":1000,"value":2.5}]}}`, &rec)
-	pts, err := c.GetTelemetry(context.Background(), GetTelemetryInput{DeviceID: "dev_1", Metric: "temp", From: 1, To: 2, Bucket: 60, Agg: "max", FillLOCF: true})
+	pts, err := c.GetTelemetry(context.Background(), GetTelemetryInput{DeviceID: "dev_1", Metric: "temp", From: time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC), To: time.Date(2026, 10, 1, 1, 0, 0, 0, time.UTC), Bucket: 60, Agg: "max", FillLOCF: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if rec.path != "/v1/teams/team_1/devices/dev_1/telemetry" {
 		t.Fatalf("path = %q", rec.path)
 	}
-	for _, want := range []string{"metric=temp", "from=1", "to=2", "bucket=60", "agg=max", "fill=locf"} {
+	for _, want := range []string{"metric=temp", "from=2026-10-01T00%3A00%3A00Z", "to=2026-10-01T01%3A00%3A00Z", "bucket=60", "agg=max", "fill=locf"} {
 		if !strings.Contains(rec.query, want) {
 			t.Fatalf("query %q missing %q", rec.query, want)
 		}

@@ -50,7 +50,7 @@ func enrollmentList(ctx context.Context, env Env, args []string) int {
 			if e == nil {
 				continue
 			}
-			row(tw, e.ID, e.SpaceID, dash(e.Label), e.Status, dash(e.ExpiresAt))
+			row(tw, e.ID, e.SpaceID, dash(e.Label), e.Status, when(e.ExpiresAt))
 		}
 		_ = tw.Flush()
 	}, err)
