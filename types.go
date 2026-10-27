@@ -433,13 +433,14 @@ type BillingSummary struct {
 
 // Invoice is one billing invoice.
 type Invoice struct {
-	ID        string          `json:"id"`
-	TeamID    string          `json:"teamId"`
-	Status    string          `json:"status"`
-	Total     *Money          `json:"total"` // nil until the invoice has a total
-	Payload   json.RawMessage `json:"payload"`
-	CreatedAt time.Time       `json:"createdAt"`
-	UpdatedAt time.Time       `json:"updatedAt"`
+	ID     string `json:"id"`
+	TeamID string `json:"teamId"`
+	Status string `json:"status"`
+	Total  *Money `json:"total"` // nil until the invoice has a total
+	// StripeInvoiceID is the Stripe invoice this one mirrors; nil when Stripe didn't send one.
+	StripeInvoiceID *string   `json:"stripeInvoiceId"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
 }
 
 // TierChangePreview is what a tier change would cost, before it is confirmed.
