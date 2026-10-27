@@ -237,7 +237,7 @@ func TestCredentialListRequiresDevice(t *testing.T) {
 
 func TestCredentialListTable(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		return jsonResp(200, `{"data":[{"id":"cred_1","kind":"token","status":"active"}]}`), nil
+		return jsonResp(200, `{"data":{"current":1,"items":[{"id":"cred_1","kind":"token","status":"active"}],"last":1,"nextCursor":null}}`), nil
 	})
 	if code := run(env, "credential", "list", "--device", "dev_1", "--token", tok); code != ExitOK {
 		t.Fatalf("exit = %d", code)

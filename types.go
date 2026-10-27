@@ -11,6 +11,9 @@ type Page[T any] struct {
 	Current int  `json:"current"`
 	Items   []*T `json:"items"`
 	Last    int  `json:"last"`
+	// NextCursor resumes the list after this page; nil on the last page, and
+	// from a list that pages by number only.
+	NextCursor *string `json:"nextCursor"`
 }
 
 // Authority is a device certificate authority (platform-generated or BYO).
