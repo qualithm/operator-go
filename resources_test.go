@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -399,5 +400,31 @@ func TestNonJSONErrorBodyFallsBackToRawMessage(t *testing.T) {
 	}
 	if ce.StatusCode != 502 || ce.Message != "upstream unavailable" {
 		t.Fatalf("client error = %+v", ce)
+	}
+}
+
+func TestClientErrorRequestID(t *testing.T) {
+	fromBody := newTestClient(t, func(req *http.Request) (*http.Response, error) {
+		res := jsonResponse(500, `{"message":"boom","requestId":"req_body"}`)
+		res.Header.Set("Request-Id", "req_header")
+		return res, nil
+	})
+	_, err := fromBody.GetDevice(context.Background(), "dev_1")
+	var ce *ClientError
+	if !errors.As(err, &ce) || ce.RequestID != "req_body" {
+		t.Fatalf("body source: err = %v", err)
+	}
+	if !strings.HasSuffix(ce.Error(), "HTTP 500: boom (request req_body)") {
+		t.Fatalf("Error() = %q", ce.Error())
+	}
+
+	fromHeader := newTestClient(t, func(req *http.Request) (*http.Response, error) {
+		res := jsonResponse(502, "upstream unavailable")
+		res.Header.Set("Request-Id", "req_header")
+		return res, nil
+	})
+	_, err = fromHeader.GetDevice(context.Background(), "dev_1")
+	if !errors.As(err, &ce) || ce.RequestID != "req_header" {
+		t.Fatalf("header source: err = %v", err)
 	}
 }

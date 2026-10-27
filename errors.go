@@ -2,6 +2,7 @@ package operator
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 )
 
@@ -23,6 +24,9 @@ type ClientError struct {
 	// RetryAfter is how long the API asked the caller to wait before retrying,
 	// from its Retry-After header; zero when absent.
 	RetryAfter time.Duration
+	// RequestID identifies the request in the API's logs: the envelope's
+	// requestId, else the Request-Id header; empty when neither was sent.
+	RequestID string
 }
 
 // Unavailable reports whether the API could not serve the request because a
@@ -34,10 +38,22 @@ func (e *ClientError) Unavailable() bool {
 
 // Error implements [error].
 func (e *ClientError) Error() string {
-	if e.Message == "" {
-		return fmt.Sprintf("operator: %s %s: HTTP %d", e.Method, e.Path, e.StatusCode)
+	msg := fmt.Sprintf("operator: %s %s: HTTP %d", e.Method, e.Path, e.StatusCode)
+	if e.Message != "" {
+		msg += ": " + e.Message
 	}
-	return fmt.Sprintf("operator: %s %s: HTTP %d: %s", e.Method, e.Path, e.StatusCode, e.Message)
+	if e.RequestID != "" {
+		msg += " (request " + e.RequestID + ")"
+	}
+	return msg
+}
+
+// requestID picks the envelope's requestId, falling back to the Request-Id header.
+func requestID(env envelope, header http.Header) string {
+	if env.RequestID != "" {
+		return env.RequestID
+	}
+	return header.Get("Request-Id")
 }
 
 // Action describes a single mutating request the client would issue. It is

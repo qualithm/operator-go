@@ -124,3 +124,16 @@ func TestApplyDryRunReportsPlan(t *testing.T) {
 		t.Fatalf("stdout = %s", got)
 	}
 }
+
+func TestAPIErrorPrintsRequestID(t *testing.T) {
+	env, _, errBuf := testEnv(func(req *http.Request) (*http.Response, error) {
+		return jsonResp(500, `{"message":"Internal error","requestId":"req_abc"}`), nil
+	})
+	code := Run(context.Background(), env, []string{"device", "get", "dev_x", "--token", "qmt_x.y"})
+	if code == ExitOK {
+		t.Fatal("expected a failing exit code")
+	}
+	if !strings.Contains(errBuf.String(), "(request req_abc)") {
+		t.Fatalf("stderr = %s", errBuf.String())
+	}
+}
