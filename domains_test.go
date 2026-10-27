@@ -554,12 +554,12 @@ func TestBilling(t *testing.T) {
 		t.Fatalf("path = %q summary = %+v", rec.path, sum)
 	}
 
-	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid","total":{"amount":2900,"currency":"USD"}}],"last":1}}`, &rec)
+	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid","total":{"amount":2900,"currency":"USD"},"stripeInvoiceId":"in_1"}],"last":1}}`, &rec)
 	invoices, err := c.ListInvoices(context.Background(), 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/invoices" || len(invoices.Items) != 1 || invoices.Items[0].Total == nil || *invoices.Items[0].Total != (Money{Amount: 2900, Currency: "USD"}) {
+	if rec.path != "/v1/teams/team_1/invoices" || len(invoices.Items) != 1 || invoices.Items[0].Total == nil || *invoices.Items[0].Total != (Money{Amount: 2900, Currency: "USD"}) || invoices.Items[0].StripeInvoiceID == nil || *invoices.Items[0].StripeInvoiceID != "in_1" {
 		t.Fatalf("path = %q invoices = %+v", rec.path, invoices)
 	}
 
