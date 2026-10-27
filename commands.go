@@ -30,12 +30,10 @@ func (c *Client) SendDeviceCommand(ctx context.Context, deviceID string, in Send
 	return out, err
 }
 
-// GetDeviceCapabilities lists the capabilities a device declared in its
-// connect-time manifest.
+// GetDeviceCapabilities lists every capability a device declared in its
+// connect-time manifest, by key, reading each page of the list.
 func (c *Client) GetDeviceCapabilities(ctx context.Context, deviceID string) ([]DeviceCapability, error) {
-	var out []DeviceCapability
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/devices/%s/capabilities", deviceID), nil, &out)
-	return out, err
+	return allPages[DeviceCapability](ctx, c, fmt.Sprintf("{team}/devices/%s/capabilities", deviceID))
 }
 
 // ParkDevice parks a device: it stops counting against the active-device

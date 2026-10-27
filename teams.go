@@ -44,11 +44,7 @@ func (c *Client) DeleteTeam(ctx context.Context, teamID string) error {
 }
 
 // GetTeamDeviceState returns the latest state snapshot for every device in
-// the team.
+// the team, by device ID, reading each page of the list.
 func (c *Client) GetTeamDeviceState(ctx context.Context, teamID string) ([]DeviceStateSnapshot, error) {
-	var out struct {
-		Items []DeviceStateSnapshot `json:"items"`
-	}
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/teams/%s/device-states", teamID), nil, &out)
-	return out.Items, err
+	return allPages[DeviceStateSnapshot](ctx, c, fmt.Sprintf("/v1/teams/%s/device-states", teamID))
 }

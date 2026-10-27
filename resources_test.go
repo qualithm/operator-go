@@ -85,9 +85,9 @@ func TestRevokeAuthority(t *testing.T) {
 	}
 }
 
-func TestListCredentialsDecodesArray(t *testing.T) {
+func TestListCredentialsDecodesPage(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 200, `{"data":[{"id":"cred_1","kind":"token"},{"id":"cred_2","kind":"cert"}]}`, &rec)
+	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"cred_1","kind":"token"},{"id":"cred_2","kind":"cert"}],"last":1,"nextCursor":null}}`, &rec)
 	creds, err := c.ListCredentials(context.Background(), "dev_1")
 	if err != nil {
 		t.Fatal(err)
@@ -427,4 +427,45 @@ func TestClientErrorRequestID(t *testing.T) {
 	if !errors.As(err, &ce) || ce.RequestID != "req_header" {
 		t.Fatalf("header source: err = %v", err)
 	}
+}
+
+func TestListCredentialsReadsEveryPage(t *testing.T) {
+	var queries []string
+	fn := roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		queries = append(queries, req.URL.RawQuery)
+		if req.URL.Query().Get("cursor") == "" {
+			return jsonResponse(200, `{"data":{"current":1,"items":[{"id":"cred_1"},null],"last":2,"nextCursor":"c2"}}`), nil
+		}
+		return jsonResponse(200, `{"data":{"current":2,"items":[{"id":"cred_2"}],"last":2,"nextCursor":null}}`), nil
+	})
+	creds, err := newTestClient(t, fn).ListCredentials(context.Background(), "dev_1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(creds) != 2 || creds[0].ID != "cred_1" || creds[1].ID != "cred_2" {
+		t.Fatalf("creds = %+v", creds)
+	}
+	if len(queries) != 2 || queries[0] != "limit=100" || queries[1] != "limit=100&cursor=c2" {
+		t.Fatalf("queries = %q", queries)
+	}
+}
+
+func TestAllPagesStops(t *testing.T) {
+	t.Run("on an error", func(t *testing.T) {
+		c := recClient(t, 500, `{"message":"boom"}`, &recorder{})
+		if _, err := c.GetTelemetry(context.Background(), GetTelemetryInput{DeviceID: "dev_1", Metric: "temp"}); err == nil {
+			t.Fatal("want an error")
+		}
+	})
+	t.Run("on a cursor that never ends", func(t *testing.T) {
+		var calls int
+		fn := roundTripFunc(func(*http.Request) (*http.Response, error) {
+			calls++
+			return jsonResponse(200, `{"data":{"current":1,"items":[],"last":1,"nextCursor":"again"}}`), nil
+		})
+		_, err := newTestClient(t, fn).GetTeamDeviceState(context.Background(), "team_1")
+		if err == nil || !strings.Contains(err.Error(), "no last page") || calls != maxWalkPages {
+			t.Fatalf("err = %v after %d calls", err, calls)
+		}
+	})
 }
