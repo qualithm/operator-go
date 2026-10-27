@@ -28,7 +28,8 @@ type GetTelemetryInput struct {
 	FillLOCF bool
 }
 
-// GetTelemetry returns bucketed telemetry points for a device metric.
+// GetTelemetry returns every bucketed telemetry point for a device metric in
+// the range, oldest first, reading each page of the list.
 func (c *Client) GetTelemetry(ctx context.Context, in GetTelemetryInput) ([]TelemetryPoint, error) {
 	if in.DeviceID == "" {
 		return nil, errors.New("operator: telemetry needs a device id")
@@ -56,11 +57,7 @@ func (c *Client) GetTelemetry(ctx context.Context, in GetTelemetryInput) ([]Tele
 	if len(v) > 0 {
 		path += "?" + v.Encode()
 	}
-	var out struct {
-		Items []TelemetryPoint `json:"items"`
-	}
-	err := c.do(ctx, http.MethodGet, path, nil, &out)
-	return out.Items, err
+	return allPages[TelemetryPoint](ctx, c, path)
 }
 
 // ReadEvents reads up to limit events from the team's live event stream and

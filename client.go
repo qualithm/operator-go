@@ -347,6 +347,43 @@ func pageQuery(page, limit int) string {
 	return "?" + v.Encode()
 }
 
+// walkLimit is the platform's largest page, so a walk makes the fewest requests.
+const walkLimit = 100
+
+// maxWalkPages bounds a walk against a list whose cursor never ends.
+const maxWalkPages = 1000
+
+// allPages reads a cursor-paged list to its end and returns every item.
+// path may already carry a query.
+func allPages[T any](ctx context.Context, c *Client, path string) ([]T, error) {
+	sep := "?"
+	if strings.Contains(path, "?") {
+		sep = "&"
+	}
+	var out []T
+	cursor := ""
+	for range maxWalkPages {
+		q := sep + "limit=" + strconv.Itoa(walkLimit)
+		if cursor != "" {
+			q += "&cursor=" + url.QueryEscape(cursor)
+		}
+		var page Page[T]
+		if err := c.do(ctx, http.MethodGet, path+q, nil, &page); err != nil {
+			return nil, err
+		}
+		for _, item := range page.Items {
+			if item != nil {
+				out = append(out, *item)
+			}
+		}
+		if page.NextCursor == nil || *page.NextCursor == "" {
+			return out, nil
+		}
+		cursor = *page.NextCursor
+	}
+	return nil, fmt.Errorf("operator: listing %s: no last page after %d pages", path, maxWalkPages)
+}
+
 // retryAfter parses a Retry-After header given in seconds; anything else is zero.
 func retryAfter(header string) time.Duration {
 	seconds, err := strconv.Atoi(strings.TrimSpace(header))
