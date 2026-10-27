@@ -142,11 +142,10 @@ type APIToken struct {
 
 // Team is a team resource with the caller's membership context.
 type Team struct {
-	ID         string          `json:"id"`
-	Name       string          `json:"name"`
-	Payload    json.RawMessage `json:"payload"`
-	MemberID   string          `json:"memberId"`
-	MemberRole string          `json:"memberRole"` // "owner" | "manager" | "viewer"
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	MemberID   string `json:"memberId"`
+	MemberRole string `json:"memberRole"` // "owner" | "manager" | "viewer"
 	// Permissions is what the caller can do in this team: their role, lowered to a token's
 	// ceiling.
 	Permissions []string  `json:"permissions"`
@@ -353,12 +352,11 @@ func (w Workspace) Can(permission string) bool {
 
 // Account is the caller's account resource.
 type Account struct {
-	ID        string          `json:"id"`
-	Email     string          `json:"email"`
-	Name      string          `json:"name"`
-	Payload   json.RawMessage `json:"payload"`
-	CreatedAt time.Time       `json:"createdAt"`
-	UpdatedAt time.Time       `json:"updatedAt"`
+	ID        string    `json:"id"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // RoleAssignment is one of the caller's team roles.
