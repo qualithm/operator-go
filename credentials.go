@@ -23,11 +23,10 @@ type IssueCertInput struct {
 	ExpiresInDays int `json:"expiresInDays,omitempty"`
 }
 
-// ListCredentials returns all credentials for a device.
+// ListCredentials returns every credential for a device, newest first,
+// reading each page of the list.
 func (c *Client) ListCredentials(ctx context.Context, deviceID string) ([]Credential, error) {
-	var out []Credential
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/devices/%s/credentials", deviceID), nil, &out)
-	return out, err
+	return allPages[Credential](ctx, c, fmt.Sprintf("{team}/devices/%s/credentials", deviceID))
 }
 
 // MintCredential mints a token credential. The returned Secret is shown

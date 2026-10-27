@@ -347,7 +347,7 @@ func TestDeviceCommands(t *testing.T) {
 		t.Fatalf("request = %s body=%v queued=%+v", rec.method, rec.body, q)
 	}
 
-	c = recClient(t, 200, `{"data":[{"id":"cap_1","key":"power","type":"onoff"}]}`, &rec)
+	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"cap_1","key":"power","type":"onoff"}],"last":1,"nextCursor":null}}`, &rec)
 	caps, err := c.GetDeviceCapabilities(context.Background(), "dev_1")
 	if err != nil {
 		t.Fatal(err)
