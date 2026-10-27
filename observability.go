@@ -103,6 +103,7 @@ func (c *Client) ReadEvents(ctx context.Context, limit int) ([]Event, error) {
 			Path:       path,
 			StatusCode: res.StatusCode,
 			Message:    env.Message,
+			RequestID:  requestID(env, res.Header),
 		}
 	}
 

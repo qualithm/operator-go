@@ -199,10 +199,11 @@ func (c *Client) DryRun() bool { return c.dryRun }
 
 // envelope is the standard API response wrapper.
 type envelope struct {
-	Data    json.RawMessage `json:"data,omitempty"`
-	Message string          `json:"message,omitempty"`
-	Code    string          `json:"code,omitempty"`
-	Status  int             `json:"status,omitempty"`
+	Data      json.RawMessage `json:"data,omitempty"`
+	Message   string          `json:"message,omitempty"`
+	Code      string          `json:"code,omitempty"`
+	Status    int             `json:"status,omitempty"`
+	RequestID string          `json:"requestId,omitempty"`
 }
 
 func (c *Client) mutating(method string) bool {
@@ -294,6 +295,7 @@ func (c *Client) doAuth(ctx context.Context, method, path string, body, out any,
 			Message:    env.Message,
 			Code:       env.Code,
 			RetryAfter: retryAfter(res.Header.Get("Retry-After")),
+			RequestID:  requestID(env, res.Header),
 		}
 	}
 

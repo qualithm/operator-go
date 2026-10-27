@@ -443,10 +443,10 @@ func TestReadEvents(t *testing.T) {
 	}
 
 	// HTTP failures surface as ClientError, so the tool layer can classify them.
-	c = recClient(t, 404, `{"message":"nope"}`, &recorder{})
+	c = recClient(t, 404, `{"message":"nope","requestId":"req_1"}`, &recorder{})
 	_, err = c.ReadEvents(context.Background(), 1)
 	var ce *ClientError
-	if !errors.As(err, &ce) || ce.StatusCode != 404 {
+	if !errors.As(err, &ce) || ce.StatusCode != 404 || ce.RequestID != "req_1" {
 		t.Fatalf("err = %v", err)
 	}
 }
