@@ -14,7 +14,7 @@ import (
 func TestTeams(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"team_1","name":"T","memberRole":"owner"}],"last":1}}`, &rec)
-	page, err := c.ListTeams(context.Background(), 1, 10)
+	page, err := c.ListTeams(context.Background(), "", 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestTeams(t *testing.T) {
 func TestMembers(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"mem_1","role":"manager"}],"last":1}}`, &rec)
-	page, err := c.ListTeamMembers(context.Background(), "team_1", 0, 0)
+	page, err := c.ListTeamMembers(context.Background(), "team_1", "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestMembers(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"mem_3","status":"invited"}],"last":1}}`, &rec)
-	invites, err := c.ListTeamInvites(context.Background(), "team_1", 0, 0)
+	invites, err := c.ListTeamInvites(context.Background(), "team_1", "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func TestMembers(t *testing.T) {
 func TestAutomations(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"auto_1","enabled":true}],"last":1}}`, &rec)
-	page, err := c.ListAutomations(context.Background(), 0, 0)
+	page, err := c.ListAutomations(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -226,11 +226,11 @@ func TestAutomations(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"run_1","status":"succeeded"}],"last":1}}`, &rec)
-	runs, err := c.ListAutomationRuns(context.Background(), "auto_2", 2, 5)
+	runs, err := c.ListAutomationRuns(context.Background(), "auto_2", "c2", 5)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/automations/auto_2/runs" || rec.query != "limit=5&page=2" || len(runs.Items) != 1 {
+	if rec.path != "/v1/teams/team_1/automations/auto_2/runs" || rec.query != "cursor=c2&limit=5" || len(runs.Items) != 1 {
 		t.Fatalf("path = %q query = %q runs = %+v", rec.path, rec.query, runs)
 	}
 
@@ -285,7 +285,7 @@ func TestTriggerAutomationUsesSecret(t *testing.T) {
 func TestDashboards(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"dash_1","spaceId":null}],"last":1}}`, &rec)
-	page, err := c.ListDashboards(context.Background(), 0, 0)
+	page, err := c.ListDashboards(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -330,7 +330,7 @@ func TestDashboards(t *testing.T) {
 func TestDeviceCommands(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"cmd_1","status":"sent"}],"last":1}}`, &rec)
-	page, err := c.ListDeviceCommands(context.Background(), "dev_1", 0, 0)
+	page, err := c.ListDeviceCommands(context.Background(), "dev_1", "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -402,7 +402,7 @@ func TestObservability(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"aud_1","action":"device.create"}],"last":1}}`, &rec)
-	audit, err := c.GetAuditLog(context.Background(), 0, 0)
+	audit, err := c.GetAuditLog(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -475,21 +475,21 @@ func TestWorkspace(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"cap_1","key":"power"}],"last":1}}`, &rec)
-	caps, err := c.ListCapabilities(context.Background(), ListCapabilitiesInput{Type: "onoff", Tag: "lamp", Key: "power", Page: 1, Limit: 5})
+	caps, err := c.ListCapabilities(context.Background(), ListCapabilitiesInput{Type: "onoff", Tag: "lamp", Key: "power", Cursor: "c1", Limit: 5})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if rec.path != "/v1/teams/team_1/capabilities" || len(caps.Items) != 1 {
 		t.Fatalf("path = %q caps = %+v", rec.path, caps)
 	}
-	for _, want := range []string{"type=onoff", "tag=lamp", "key=power"} {
+	for _, want := range []string{"type=onoff", "tag=lamp", "key=power", "cursor=c1", "limit=5"} {
 		if !strings.Contains(rec.query, want) {
 			t.Fatalf("query %q missing %q", rec.query, want)
 		}
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"mem_1","role":"owner","teamName":"T"}],"last":1}}`, &rec)
-	roles, err := c.ListRoles(context.Background(), 0, 0)
+	roles, err := c.ListRoles(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -498,7 +498,7 @@ func TestWorkspace(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"ses_1","thisDevice":true}],"last":1}}`, &rec)
-	sessions, err := c.ListSessions(context.Background(), 0, 0, true)
+	sessions, err := c.ListSessions(context.Background(), "", 0, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -534,7 +534,7 @@ func TestWorkspace(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"spc_1","zone":"us"}],"last":1}}`, &rec)
-	spaces, err := c.ListZoneSpaces(context.Background(), "us", 0, 0)
+	spaces, err := c.ListZoneSpaces(context.Background(), "us", "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -555,7 +555,7 @@ func TestBilling(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"inv_1","status":"paid","total":{"amount":2900,"currency":"USD"},"stripeInvoiceId":"in_1"}],"last":1}}`, &rec)
-	invoices, err := c.ListInvoices(context.Background(), 0, 0)
+	invoices, err := c.ListInvoices(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}

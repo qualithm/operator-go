@@ -34,7 +34,7 @@ func runAuthority(ctx context.Context, env Env, args []string) int {
 func authorityList(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("authority list", flag.ContinueOnError)
 	cf := addCommon(fs)
-	page := fs.Int("page", 0, "page number")
+	cursor := fs.String("cursor", "", "resume after a page, from the cursor it printed")
 	limit := fs.Int("limit", 0, "items per page (max 100)")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
@@ -43,7 +43,7 @@ func authorityList(ctx context.Context, env Env, args []string) int {
 	if code >= 0 {
 		return code
 	}
-	res, err := client.ListAuthorities(ctx, *page, *limit)
+	res, err := client.ListAuthorities(ctx, *cursor, *limit)
 	return cf.report(env, res, func(w io.Writer) {
 		tw := newTable(w)
 		row(tw, "ID", "NAME", "KIND", "STATUS", "FINGERPRINT")
@@ -54,6 +54,7 @@ func authorityList(ctx context.Context, env Env, args []string) int {
 			row(tw, a.ID, dash(a.Name), a.Kind, a.Status, dash(a.Fingerprint))
 		}
 		_ = tw.Flush()
+		nextPage(w, res.NextCursor)
 	}, err)
 }
 

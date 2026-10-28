@@ -56,9 +56,9 @@ type IssuedTriggerSecret struct {
 }
 
 // ListAutomations returns a page of automations for the token's team.
-func (c *Client) ListAutomations(ctx context.Context, page, limit int) (Page[Automation], error) {
+func (c *Client) ListAutomations(ctx context.Context, cursor string, limit int) (Page[Automation], error) {
 	var out Page[Automation]
-	err := c.do(ctx, http.MethodGet, "{team}/automations"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/automations"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 
@@ -111,9 +111,9 @@ func (c *Client) RunAutomation(ctx context.Context, automationID string) (Automa
 }
 
 // ListAutomationRuns returns a page of execution summaries for an automation.
-func (c *Client) ListAutomationRuns(ctx context.Context, automationID string, page, limit int) (Page[AutomationRun], error) {
+func (c *Client) ListAutomationRuns(ctx context.Context, automationID string, cursor string, limit int) (Page[AutomationRun], error) {
 	var out Page[AutomationRun]
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/automations/%s/runs", automationID)+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/automations/%s/runs", automationID)+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 

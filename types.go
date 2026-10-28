@@ -6,13 +6,11 @@ import (
 )
 
 // Page is the standard paginated list envelope. Items may be nil in sparse
-// pages, matching the API's `(T | undefined)[]` shape.
+// pages, matching the API's `(T | undefined)[]` shape. Walk every page with
+// [All].
 type Page[T any] struct {
-	Current int  `json:"current"`
-	Items   []*T `json:"items"`
-	Last    int  `json:"last"`
-	// NextCursor resumes the list after this page; nil on the last page, and
-	// from a list that pages by number only.
+	Items []*T `json:"items"`
+	// NextCursor resumes the list after this page; nil on the last page.
 	NextCursor *string `json:"nextCursor"`
 }
 

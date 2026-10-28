@@ -157,15 +157,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	page, err := client.ListDevices(context.Background(), 0, 0)
-	if err != nil {
-		log.Fatal(err)
+	ctx := context.Background()
+	devices := func(ctx context.Context, cursor string) (operator.Page[operator.Device], error) {
+		return client.ListDevices(ctx, cursor, operator.WalkLimit)
 	}
-	for _, d := range page.Items {
+	for d, err := range operator.All(ctx, devices) {
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Println(d.ID, d.Name)
 	}
 }
 ```
+
+Every `List` method takes a cursor: empty for the first page, then the previous page's
+`NextCursor`. `operator.All` walks a list to its end.
 
 Enable a dry-run at construction so mutating calls return a `*operator.DryRunError` instead of
 sending:
