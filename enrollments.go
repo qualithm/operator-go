@@ -15,9 +15,9 @@ type CreateEnrollmentInput struct {
 }
 
 // ListEnrollments returns a page of enrollments for the token's team.
-func (c *Client) ListEnrollments(ctx context.Context, page, limit int) (Page[Enrollment], error) {
+func (c *Client) ListEnrollments(ctx context.Context, cursor string, limit int) (Page[Enrollment], error) {
 	var out Page[Enrollment]
-	err := c.do(ctx, http.MethodGet, "{team}/enrollments"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/enrollments"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 

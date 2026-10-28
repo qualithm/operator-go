@@ -132,18 +132,15 @@ func reconcile(ctx context.Context, env Env, client *operator.Client, m manifest
 // through all results.
 func listSpaceDeviceNames(ctx context.Context, client *operator.Client, spaceID string) (map[string]struct{}, error) {
 	names := map[string]struct{}{}
-	for page := 1; ; page++ {
-		res, err := client.ListSpaceDevices(ctx, spaceID, page, 100)
+	fetch := func(ctx context.Context, cursor string) (operator.Page[operator.Device], error) {
+		return client.ListSpaceDevices(ctx, spaceID, cursor, operator.WalkLimit)
+	}
+	for d, err := range operator.All(ctx, fetch) {
 		if err != nil {
 			return nil, err
 		}
-		for _, d := range res.Items {
-			if d != nil && d.Name != "" {
-				names[d.Name] = struct{}{}
-			}
-		}
-		if res.Last == 0 || page >= res.Last {
-			break
+		if d.Name != "" {
+			names[d.Name] = struct{}{}
 		}
 	}
 	return names, nil

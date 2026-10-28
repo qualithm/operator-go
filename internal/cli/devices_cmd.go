@@ -38,7 +38,7 @@ func deviceList(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("device list", flag.ContinueOnError)
 	cf := addCommon(fs)
 	space := fs.String("space", "", "restrict to a space id")
-	page := fs.Int("page", 0, "page number")
+	cursor := fs.String("cursor", "", "resume after a page, from the cursor it printed")
 	limit := fs.Int("limit", 0, "items per page (max 100)")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
@@ -50,9 +50,9 @@ func deviceList(ctx context.Context, env Env, args []string) int {
 	var res operator.Page[operator.Device]
 	var err error
 	if *space != "" {
-		res, err = client.ListSpaceDevices(ctx, *space, *page, *limit)
+		res, err = client.ListSpaceDevices(ctx, *space, *cursor, *limit)
 	} else {
-		res, err = client.ListDevices(ctx, *page, *limit)
+		res, err = client.ListDevices(ctx, *cursor, *limit)
 	}
 	return cf.report(env, res, func(w io.Writer) {
 		tw := newTable(w)
@@ -64,6 +64,7 @@ func deviceList(ctx context.Context, env Env, args []string) int {
 			row(tw, d.ID, dash(d.Name), d.SpaceID, dash(d.SpaceName))
 		}
 		_ = tw.Flush()
+		nextPage(w, res.NextCursor)
 	}, err)
 }
 

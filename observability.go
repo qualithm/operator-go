@@ -140,8 +140,8 @@ func (c *Client) GetUsage(ctx context.Context) (Usage, error) {
 }
 
 // GetAuditLog returns a page of audit-trail events for the token's team.
-func (c *Client) GetAuditLog(ctx context.Context, page, limit int) (Page[AuditEvent], error) {
+func (c *Client) GetAuditLog(ctx context.Context, cursor string, limit int) (Page[AuditEvent], error) {
 	var out Page[AuditEvent]
-	err := c.do(ctx, http.MethodGet, "{team}/audit-events"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/audit-events"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }

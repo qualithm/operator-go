@@ -12,9 +12,9 @@ type UpdateTeamInput struct {
 }
 
 // ListTeams returns a page of teams the token's member belongs to.
-func (c *Client) ListTeams(ctx context.Context, page, limit int) (Page[Team], error) {
+func (c *Client) ListTeams(ctx context.Context, cursor string, limit int) (Page[Team], error) {
 	var out Page[Team]
-	err := c.do(ctx, http.MethodGet, "/v1/teams"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "/v1/teams"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 

@@ -35,15 +35,13 @@ func main() {
 
 	ctx := context.Background()
 
-	// List the first page of devices in the token's team.
-	devices, err := client.ListDevices(ctx, 1, 20)
-	if err != nil {
-		log.Fatal(err)
+	// Walk every device in the token's team, a page at a time.
+	fetch := func(ctx context.Context, cursor string) (operator.Page[operator.Device], error) {
+		return client.ListDevices(ctx, cursor, operator.WalkLimit)
 	}
-	fmt.Printf("page %d of %d\n", devices.Current, devices.Last)
-	for _, d := range devices.Items {
-		if d == nil {
-			continue
+	for d, err := range operator.All(ctx, fetch) {
+		if err != nil {
+			log.Fatal(err)
 		}
 		fmt.Printf("  %s\t%s\t(space %s)\n", d.ID, d.Name, d.SpaceID)
 	}

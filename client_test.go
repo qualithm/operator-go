@@ -89,14 +89,14 @@ func TestGetDecodesData(t *testing.T) {
 		gotPath = req.URL.Path + "?" + req.URL.RawQuery
 		return jsonResponse(200, `{"data":{"current":1,"items":[{"id":"dev_1","name":"a"}],"last":1}}`), nil
 	})
-	page, err := c.ListDevices(context.Background(), 1, 20)
+	page, err := c.ListDevices(context.Background(), "", 20)
 	if err != nil {
 		t.Fatalf("ListDevices: %v", err)
 	}
 	if gotAuth != "Bearer qmt_sel.ver" {
 		t.Fatalf("auth header = %q", gotAuth)
 	}
-	if gotPath != "/v1/teams/team_1/devices?limit=20&page=1" {
+	if gotPath != "/v1/teams/team_1/devices?limit=20" {
 		t.Fatalf("path = %q", gotPath)
 	}
 	if len(page.Items) != 1 || page.Items[0].ID != "dev_1" {
@@ -110,7 +110,7 @@ func TestUserAgentHeader(t *testing.T) {
 		got = req.Header.Get("User-Agent")
 		return jsonResponse(200, `{"data":{"current":1,"items":[],"last":1}}`), nil
 	})
-	if _, err := c.ListDevices(context.Background(), 1, 20); err != nil {
+	if _, err := c.ListDevices(context.Background(), "", 20); err != nil {
 		t.Fatalf("ListDevices: %v", err)
 	}
 	if want := "operator-go/" + Version; got != want {
@@ -124,7 +124,7 @@ func TestWithUserAgentPrefix(t *testing.T) {
 		got = req.Header.Get("User-Agent")
 		return jsonResponse(200, `{"data":{"current":1,"items":[],"last":1}}`), nil
 	}, WithUserAgent("qualithm/9.9.9"))
-	if _, err := c.ListDevices(context.Background(), 1, 20); err != nil {
+	if _, err := c.ListDevices(context.Background(), "", 20); err != nil {
 		t.Fatalf("ListDevices: %v", err)
 	}
 	if want := "qualithm/9.9.9 operator-go/" + Version; got != want {
@@ -198,7 +198,7 @@ func TestDryRunStillReads(t *testing.T) {
 	c := newTestClient(t, func(req *http.Request) (*http.Response, error) {
 		return jsonResponse(200, `{"data":{"current":1,"items":[],"last":1}}`), nil
 	}, WithDryRun(true))
-	if _, err := c.ListDevices(context.Background(), 0, 0); err != nil {
+	if _, err := c.ListDevices(context.Background(), "", 0); err != nil {
 		t.Fatalf("read in dry-run should succeed: %v", err)
 	}
 }
@@ -223,10 +223,10 @@ func TestMintCredentialSendsBody(t *testing.T) {
 
 func TestPageQuery(t *testing.T) {
 	cases := map[string]string{
-		pageQuery(0, 0):   "",
-		pageQuery(2, 0):   "?page=2",
-		pageQuery(0, 50):  "?limit=50",
-		pageQuery(3, 100): "?limit=100&page=3",
+		pageQuery("", 0):     "",
+		pageQuery("c2", 0):   "?cursor=c2",
+		pageQuery("", 50):    "?limit=50",
+		pageQuery("c3", 100): "?cursor=c3&limit=100",
 	}
 	for got, want := range cases {
 		if got != want {
@@ -248,7 +248,7 @@ func TestTeamIDAsksOnceWhenUnset(t *testing.T) {
 		t.Fatal(err)
 	}
 	for range 2 {
-		if _, err := c.ListDevices(context.Background(), 0, 0); err != nil {
+		if _, err := c.ListDevices(context.Background(), "", 0); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -265,7 +265,7 @@ func TestTeamIDNeedsExactlyOneTeam(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := c.ListDevices(context.Background(), 0, 0); !errors.Is(err, ErrNoTeam) {
+	if _, err := c.ListDevices(context.Background(), "", 0); !errors.Is(err, ErrNoTeam) {
 		t.Fatalf("err = %v, want ErrNoTeam", err)
 	}
 }
