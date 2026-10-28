@@ -80,7 +80,8 @@ type CertCredential struct {
 	CACertificatePEM string     `json:"caCertificatePem"`
 }
 
-// Device is a device resource with its space context.
+// Device is a device resource with its space context. The optional fields are
+// nil or empty when the platform doesn't send them.
 type Device struct {
 	ID        string    `json:"id"`
 	SpaceID   string    `json:"spaceId"`
@@ -89,6 +90,29 @@ type Device struct {
 	SpaceName string    `json:"spaceName"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+	// ParkedAt is set while the device is parked: it cannot connect or write.
+	ParkedAt *time.Time `json:"parkedAt,omitempty"`
+	// CapabilitiesDeclared reports whether the device's latest session
+	// declared its capabilities before sending data; nil until a session has
+	// done either.
+	CapabilitiesDeclared *bool `json:"capabilitiesDeclared,omitempty"`
+	// Virtual is true when the device declared itself virtual at claim: it
+	// runs on a host rather than a board, and counts as a device all the same.
+	Virtual *bool `json:"virtual,omitempty"`
+	// Level is "development" or "production", derived from Checks.
+	Level string `json:"level,omitempty"`
+	// Checks is what the platform can evidence about the device's credentials.
+	Checks []DeviceCheck `json:"checks,omitempty"`
+}
+
+// DeviceCheck is one check behind a device's level.
+type DeviceCheck struct {
+	// ID names the check, e.g. "credential-certificate".
+	ID string `json:"id"`
+	// Pass reports whether the device meets it.
+	Pass bool `json:"pass"`
+	// Evidence is the fact the result rests on, in plain words.
+	Evidence string `json:"evidence"`
 }
 
 // Space is a space resource: the zone-scoped container devices live in.
