@@ -14,9 +14,9 @@ func (c *Client) GetBillingSummary(ctx context.Context) (BillingSummary, error) 
 }
 
 // ListInvoices returns a page of the team's invoices.
-func (c *Client) ListInvoices(ctx context.Context, page, limit int) (Page[Invoice], error) {
+func (c *Client) ListInvoices(ctx context.Context, cursor string, limit int) (Page[Invoice], error) {
 	var out Page[Invoice]
-	err := c.do(ctx, http.MethodGet, "{team}/invoices"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/invoices"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 

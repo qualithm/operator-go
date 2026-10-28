@@ -41,6 +41,13 @@ func parseExpiresAt(env Env, value string) (*time.Time, bool) {
 	return &t, true
 }
 
+// nextPage tells the reader how to fetch the page after this one, when there is one.
+func nextPage(w io.Writer, next *string) {
+	if next != nil && *next != "" {
+		_, _ = fmt.Fprintf(w, "\nmore: --cursor %s\n", *next)
+	}
+}
+
 // row writes a tab-separated line to the tabwriter.
 func row(tw *tabwriter.Writer, cols ...string) {
 	for i, col := range cols {

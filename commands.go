@@ -17,9 +17,9 @@ type SendDeviceCommandInput struct {
 }
 
 // ListDeviceCommands returns a page of command deliveries for a device.
-func (c *Client) ListDeviceCommands(ctx context.Context, deviceID string, page, limit int) (Page[DeviceCommandSummary], error) {
+func (c *Client) ListDeviceCommands(ctx context.Context, deviceID string, cursor string, limit int) (Page[DeviceCommandSummary], error) {
 	var out Page[DeviceCommandSummary]
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/devices/%s/commands", deviceID)+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("{team}/devices/%s/commands", deviceID)+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 

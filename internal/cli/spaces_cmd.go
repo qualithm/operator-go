@@ -37,7 +37,7 @@ func runSpace(ctx context.Context, env Env, args []string) int {
 func spaceList(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("space list", flag.ContinueOnError)
 	cf := addCommon(fs)
-	page := fs.Int("page", 0, "page number")
+	cursor := fs.String("cursor", "", "resume after a page, from the cursor it printed")
 	limit := fs.Int("limit", 0, "items per page (max 100)")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
@@ -46,7 +46,7 @@ func spaceList(ctx context.Context, env Env, args []string) int {
 	if code >= 0 {
 		return code
 	}
-	res, err := client.ListSpaces(ctx, *page, *limit)
+	res, err := client.ListSpaces(ctx, *cursor, *limit)
 	return cf.report(env, res, func(w io.Writer) {
 		tw := newTable(w)
 		row(tw, "ID", "NAME", "ZONE", "DEVICES")
@@ -57,6 +57,7 @@ func spaceList(ctx context.Context, env Env, args []string) int {
 			row(tw, s.ID, s.Name, s.Zone, fmt.Sprint(s.DeviceTotal))
 		}
 		_ = tw.Flush()
+		nextPage(w, res.NextCursor)
 	}, err)
 }
 

@@ -24,9 +24,9 @@ type CreateTeamInviteInput struct {
 }
 
 // ListTeamMembers returns a page of active members of the team.
-func (c *Client) ListTeamMembers(ctx context.Context, teamID string, page, limit int) (Page[Member], error) {
+func (c *Client) ListTeamMembers(ctx context.Context, teamID string, cursor string, limit int) (Page[Member], error) {
 	var out Page[Member]
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/teams/%s/members", teamID)+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/teams/%s/members", teamID)+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 
@@ -56,9 +56,9 @@ func (c *Client) RemoveTeamMember(ctx context.Context, teamID, memberID string) 
 }
 
 // ListTeamInvites returns a page of pending invitations to the team.
-func (c *Client) ListTeamInvites(ctx context.Context, teamID string, page, limit int) (Page[Member], error) {
+func (c *Client) ListTeamInvites(ctx context.Context, teamID string, cursor string, limit int) (Page[Member], error) {
 	var out Page[Member]
-	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/teams/%s/invites", teamID)+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/teams/%s/invites", teamID)+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 

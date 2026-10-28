@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -41,14 +42,14 @@ func recClient(t *testing.T, status int, respBody string, rec *recorder, opts ..
 func TestListAuthorities(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"aut_1","name":"ca"}],"last":1}}`, &rec)
-	page, err := c.ListAuthorities(context.Background(), 2, 50)
+	page, err := c.ListAuthorities(context.Background(), "c2", 50)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if rec.method != http.MethodGet || rec.path != "/v1/teams/team_1/authorities" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
-	if rec.query != "limit=50&page=2" {
+	if rec.query != "cursor=c2&limit=50" {
 		t.Fatalf("query = %q", rec.query)
 	}
 	if len(page.Items) != 1 || page.Items[0].ID != "aut_1" {
@@ -158,7 +159,7 @@ func TestRevokeCredential(t *testing.T) {
 func TestListEnrollments(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"enr_1","spaceId":"spc_1"}],"last":1}}`, &rec)
-	page, err := c.ListEnrollments(context.Background(), 0, 0)
+	page, err := c.ListEnrollments(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -221,10 +222,10 @@ func TestDeleteDevice(t *testing.T) {
 func TestListSpaceDevices(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"dev_1"}],"last":1}}`, &rec)
-	if _, err := c.ListSpaceDevices(context.Background(), "spc_1", 1, 100); err != nil {
+	if _, err := c.ListSpaceDevices(context.Background(), "spc_1", "", 100); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/devices" || rec.query != "limit=100&page=1&spaceId=spc_1" {
+	if rec.path != "/v1/teams/team_1/devices" || rec.query != "limit=100&spaceId=spc_1" {
 		t.Fatalf("request = %s?%s", rec.path, rec.query)
 	}
 }
@@ -232,7 +233,7 @@ func TestListSpaceDevices(t *testing.T) {
 func TestListSpaces(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"spc_1","zone":"de-fra-a","deviceTotal":2}],"last":1}}`, &rec)
-	page, err := c.ListSpaces(context.Background(), 0, 0)
+	page, err := c.ListSpaces(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -299,7 +300,7 @@ func TestDeleteSpace(t *testing.T) {
 func TestListAPITokens(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"tok_1","name":"ci"}],"last":1}}`, &rec)
-	page, err := c.ListAPITokens(context.Background(), 0, 0)
+	page, err := c.ListAPITokens(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -329,7 +330,7 @@ func TestWithBaseURLRoutesRequest(t *testing.T) {
 		return jsonResponse(200, `{"data":{"items":[],"current":0,"last":0}}`), nil
 	})
 	c := newTestClient(t, fn, WithBaseURL("http://example.test:9000/"))
-	if _, err := c.ListDevices(context.Background(), 0, 0); err != nil {
+	if _, err := c.ListDevices(context.Background(), "", 0); err != nil {
 		t.Fatal(err)
 	}
 	if gotHost != "example.test:9000" {
@@ -383,7 +384,7 @@ func TestInvalidDataFieldIsDecodeError(t *testing.T) {
 		// data is a string but ListDevices decodes into a Page object.
 		return jsonResponse(200, `{"data":"not-an-object"}`), nil
 	})
-	_, err := c.ListDevices(context.Background(), 0, 0)
+	_, err := c.ListDevices(context.Background(), "", 0)
 	if err == nil {
 		t.Fatal("expected decode error for malformed data field")
 	}
@@ -445,7 +446,7 @@ func TestListCredentialsReadsEveryPage(t *testing.T) {
 	if len(creds) != 2 || creds[0].ID != "cred_1" || creds[1].ID != "cred_2" {
 		t.Fatalf("creds = %+v", creds)
 	}
-	if len(queries) != 2 || queries[0] != "limit=100" || queries[1] != "limit=100&cursor=c2" {
+	if len(queries) != 2 || queries[0] != "limit=100" || queries[1] != "cursor=c2&limit=100" {
 		t.Fatalf("queries = %q", queries)
 	}
 }
@@ -466,6 +467,73 @@ func TestAllPagesStops(t *testing.T) {
 		_, err := newTestClient(t, fn).GetTeamDeviceState(context.Background(), "team_1")
 		if err == nil || !strings.Contains(err.Error(), "no last page") || calls != maxWalkPages {
 			t.Fatalf("err = %v after %d calls", err, calls)
+		}
+	})
+}
+
+func TestAllWalksEveryPage(t *testing.T) {
+	next := func(s string) *string { return &s }
+	pages := map[string]Page[Device]{
+		"":   {Items: []*Device{{ID: "dev_1"}, nil}, NextCursor: next("c2")},
+		"c2": {Items: []*Device{{ID: "dev_2"}}, NextCursor: next("c3")},
+		"c3": {Items: []*Device{{ID: "dev_3"}}},
+	}
+	var cursors []string
+	fetch := func(_ context.Context, cursor string) (Page[Device], error) {
+		cursors = append(cursors, cursor)
+		page, ok := pages[cursor]
+		if !ok {
+			return Page[Device]{}, fmt.Errorf("unknown cursor %q", cursor)
+		}
+		return page, nil
+	}
+
+	t.Run("to the last page", func(t *testing.T) {
+		cursors = nil
+		var ids []string
+		for d, err := range All(context.Background(), fetch) {
+			if err != nil {
+				t.Fatal(err)
+			}
+			ids = append(ids, d.ID)
+		}
+		if strings.Join(ids, ",") != "dev_1,dev_2,dev_3" || strings.Join(cursors, ",") != ",c2,c3" {
+			t.Fatalf("ids = %q cursors = %q", ids, cursors)
+		}
+	})
+	t.Run("until the caller stops", func(t *testing.T) {
+		cursors = nil
+		for range All(context.Background(), fetch) {
+			break
+		}
+		if len(cursors) != 1 {
+			t.Fatalf("cursors = %q", cursors)
+		}
+	})
+	t.Run("at the first error", func(t *testing.T) {
+		boom := errors.New("boom")
+		var errs []error
+		for d, err := range All(context.Background(), func(context.Context, string) (Page[Device], error) {
+			return Page[Device]{}, boom
+		}) {
+			if d != nil {
+				t.Fatalf("item with an error: %+v", d)
+			}
+			errs = append(errs, err)
+		}
+		if len(errs) != 1 || !errors.Is(errs[0], boom) {
+			t.Fatalf("errs = %v", errs)
+		}
+	})
+	t.Run("on a cursor that never ends", func(t *testing.T) {
+		var last error
+		for _, err := range All(context.Background(), func(context.Context, string) (Page[Device], error) {
+			return Page[Device]{NextCursor: next("again")}, nil
+		}) {
+			last = err
+		}
+		if !errors.Is(last, ErrEndlessList) {
+			t.Fatalf("err = %v", last)
 		}
 	})
 }

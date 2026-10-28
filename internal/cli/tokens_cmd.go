@@ -33,7 +33,7 @@ func runToken(ctx context.Context, env Env, args []string) int {
 func tokenList(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("token list", flag.ContinueOnError)
 	cf := addCommon(fs)
-	page := fs.Int("page", 0, "page number")
+	cursor := fs.String("cursor", "", "resume after a page, from the cursor it printed")
 	limit := fs.Int("limit", 0, "items per page (max 100)")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
@@ -42,7 +42,7 @@ func tokenList(ctx context.Context, env Env, args []string) int {
 	if code >= 0 {
 		return code
 	}
-	res, err := client.ListAPITokens(ctx, *page, *limit)
+	res, err := client.ListAPITokens(ctx, *cursor, *limit)
 	return cf.report(env, res, func(w io.Writer) {
 		tw := newTable(w)
 		row(tw, "ID", "NAME", "ROLE", "STATUS", "EXPIRES", "LAST-USED")
@@ -57,6 +57,7 @@ func tokenList(ctx context.Context, env Env, args []string) int {
 			row(tw, t.ID, dash(t.Name), role, t.Status, when(t.ExpiresAt), when(t.LastUsedAt))
 		}
 		_ = tw.Flush()
+		nextPage(w, res.NextCursor)
 	}, err)
 }
 

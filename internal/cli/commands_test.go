@@ -355,6 +355,21 @@ func TestDeviceListSpaceScoped(t *testing.T) {
 	}
 }
 
+func TestDeviceListCursor(t *testing.T) {
+	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
+		if req.URL.Query().Get("cursor") != "c1" || req.URL.Query().Has("page") {
+			t.Fatalf("query = %s", req.URL.RawQuery)
+		}
+		return jsonResp(200, `{"data":{"items":[{"id":"dev_2"}],"nextCursor":"c2"}}`), nil
+	})
+	if code := run(env, "device", "list", "--cursor", "c1", "--token", tok); code != ExitOK {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(out.String(), "more: --cursor c2") {
+		t.Fatalf("stdout = %q", out.String())
+	}
+}
+
 func TestDeviceGetTable(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
 		return jsonResp(200, `{"data":{"id":"dev_1","spaceId":"spc_1","name":"gw"}}`), nil
@@ -725,6 +740,25 @@ func TestApplyExistingDeviceIsNoOp(t *testing.T) {
 		return jsonResp(200, `{"data":{"current":1,"items":[{"id":"dev_1","name":"gw-1"}],"last":1}}`), nil
 	})
 	path := writeManifest(t, "spaces:\n  - id: spc_1\n    devices:\n      - name: gw-1\n")
+	if code := run(env, "apply", path, "--token", tok, "--json"); code != ExitOK {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(out.String(), `"exists"`) {
+		t.Fatalf("stdout = %q", out.String())
+	}
+}
+
+func TestApplyReadsEverySpacePage(t *testing.T) {
+	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
+		if req.Method != http.MethodGet {
+			t.Fatalf("a device on a later page must not be created: %s %s", req.Method, req.URL.Path)
+		}
+		if req.URL.Query().Get("cursor") == "" {
+			return jsonResp(200, `{"data":{"items":[{"id":"dev_1","name":"gw-1"}],"nextCursor":"c2"}}`), nil
+		}
+		return jsonResp(200, `{"data":{"items":[{"id":"dev_2","name":"gw-2"}],"nextCursor":null}}`), nil
+	})
+	path := writeManifest(t, "spaces:\n  - id: spc_1\n    devices:\n      - name: gw-2\n")
 	if code := run(env, "apply", path, "--token", tok, "--json"); code != ExitOK {
 		t.Fatalf("exit = %d", code)
 	}

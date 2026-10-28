@@ -15,9 +15,9 @@ type CreateAuthorityInput struct {
 }
 
 // ListAuthorities returns a page of authorities for the token's team.
-func (c *Client) ListAuthorities(ctx context.Context, page, limit int) (Page[Authority], error) {
+func (c *Client) ListAuthorities(ctx context.Context, cursor string, limit int) (Page[Authority], error) {
 	var out Page[Authority]
-	err := c.do(ctx, http.MethodGet, "{team}/authorities"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/authorities"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 

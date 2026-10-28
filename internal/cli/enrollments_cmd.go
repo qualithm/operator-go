@@ -33,7 +33,7 @@ func runEnrollment(ctx context.Context, env Env, args []string) int {
 func enrollmentList(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("enrollment list", flag.ContinueOnError)
 	cf := addCommon(fs)
-	page := fs.Int("page", 0, "page number")
+	cursor := fs.String("cursor", "", "resume after a page, from the cursor it printed")
 	limit := fs.Int("limit", 0, "items per page (max 100)")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
@@ -42,7 +42,7 @@ func enrollmentList(ctx context.Context, env Env, args []string) int {
 	if code >= 0 {
 		return code
 	}
-	res, err := client.ListEnrollments(ctx, *page, *limit)
+	res, err := client.ListEnrollments(ctx, *cursor, *limit)
 	return cf.report(env, res, func(w io.Writer) {
 		tw := newTable(w)
 		row(tw, "ID", "SPACE", "LABEL", "STATUS", "EXPIRES")
@@ -53,6 +53,7 @@ func enrollmentList(ctx context.Context, env Env, args []string) int {
 			row(tw, e.ID, e.SpaceID, dash(e.Label), e.Status, when(e.ExpiresAt))
 		}
 		_ = tw.Flush()
+		nextPage(w, res.NextCursor)
 	}, err)
 }
 
