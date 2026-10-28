@@ -33,7 +33,7 @@ func TestIdempotencyKey(t *testing.T) {
 		t.Fatalf("a retry should reuse the caller's key, got %q", keys[2:])
 	}
 
-	if _, err := c.ListSpaces(context.Background(), 0, 0); err != nil {
+	if _, err := c.ListSpaces(context.Background(), "", 0); err != nil {
 		t.Fatal(err)
 	}
 	if keys[4] != "" {

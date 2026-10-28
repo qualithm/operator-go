@@ -13,9 +13,9 @@ type CreateSpaceInput struct {
 }
 
 // ListSpaces returns a page of spaces for the token's team.
-func (c *Client) ListSpaces(ctx context.Context, page, limit int) (Page[Space], error) {
+func (c *Client) ListSpaces(ctx context.Context, cursor string, limit int) (Page[Space], error) {
 	var out Page[Space]
-	err := c.do(ctx, http.MethodGet, "{team}/spaces"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/spaces"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 

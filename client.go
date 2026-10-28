@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
+	"iter"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -314,15 +315,15 @@ func pathOnly(path string) string {
 	return path
 }
 
-// pageQuery renders page/limit query parameters, omitting zero values.
+// pageQuery renders cursor/limit query parameters, omitting zero values.
 // filterQuery is pageQuery with one filter, which is left out when empty.
-func filterQuery(key, value string, page, limit int) string {
+func filterQuery(key, value, cursor string, limit int) string {
 	v := url.Values{}
 	if value != "" {
 		v.Set(key, value)
 	}
-	if page > 0 {
-		v.Set("page", fmt.Sprint(page))
+	if cursor != "" {
+		v.Set("cursor", cursor)
 	}
 	if limit > 0 {
 		v.Set("limit", fmt.Sprint(limit))
@@ -333,25 +334,51 @@ func filterQuery(key, value string, page, limit int) string {
 	return "?" + v.Encode()
 }
 
-func pageQuery(page, limit int) string {
-	v := url.Values{}
-	if page > 0 {
-		v.Set("page", fmt.Sprint(page))
-	}
-	if limit > 0 {
-		v.Set("limit", fmt.Sprint(limit))
-	}
-	if len(v) == 0 {
-		return ""
-	}
-	return "?" + v.Encode()
+func pageQuery(cursor string, limit int) string {
+	return filterQuery("", "", cursor, limit)
 }
 
-// walkLimit is the platform's largest page, so a walk makes the fewest requests.
-const walkLimit = 100
+// WalkLimit is the platform's largest page. Pass it to a List method inside
+// [All] so a walk makes the fewest requests.
+const WalkLimit = 100
 
 // maxWalkPages bounds a walk against a list whose cursor never ends.
 const maxWalkPages = 1000
+
+// ErrEndlessList is returned by [All] when a list still has a next cursor
+// after the most pages a walk reads.
+var ErrEndlessList = errors.New("operator: list has no last page")
+
+// All walks a list from its first page to its last and yields each item.
+// fetch reads the page at a cursor, where the empty cursor is the first page:
+//
+//	for d, err := range operator.All(ctx, func(ctx context.Context, cursor string) (operator.Page[operator.Device], error) {
+//		return client.ListDevices(ctx, cursor, operator.WalkLimit)
+//	}) {
+//
+// The walk stops at the first error, which it yields with a nil item.
+func All[T any](ctx context.Context, fetch func(ctx context.Context, cursor string) (Page[T], error)) iter.Seq2[*T, error] {
+	return func(yield func(*T, error) bool) {
+		cursor := ""
+		for range maxWalkPages {
+			page, err := fetch(ctx, cursor)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			for _, item := range page.Items {
+				if item != nil && !yield(item, nil) {
+					return
+				}
+			}
+			if page.NextCursor == nil || *page.NextCursor == "" {
+				return
+			}
+			cursor = *page.NextCursor
+		}
+		yield(nil, ErrEndlessList)
+	}
+}
 
 // allPages reads a cursor-paged list to its end and returns every item.
 // path may already carry a query.
@@ -360,28 +387,23 @@ func allPages[T any](ctx context.Context, c *Client, path string) ([]T, error) {
 	if strings.Contains(path, "?") {
 		sep = "&"
 	}
-	var out []T
-	cursor := ""
-	for range maxWalkPages {
-		q := sep + "limit=" + strconv.Itoa(walkLimit)
-		if cursor != "" {
-			q += "&cursor=" + url.QueryEscape(cursor)
-		}
+	fetch := func(ctx context.Context, cursor string) (Page[T], error) {
 		var page Page[T]
-		if err := c.do(ctx, http.MethodGet, path+q, nil, &page); err != nil {
+		q := strings.TrimPrefix(pageQuery(cursor, WalkLimit), "?")
+		err := c.do(ctx, http.MethodGet, path+sep+q, nil, &page)
+		return page, err
+	}
+	var out []T
+	for item, err := range All(ctx, fetch) {
+		if err != nil {
+			if errors.Is(err, ErrEndlessList) {
+				return nil, fmt.Errorf("operator: listing %s: %w", path, err)
+			}
 			return nil, err
 		}
-		for _, item := range page.Items {
-			if item != nil {
-				out = append(out, *item)
-			}
-		}
-		if page.NextCursor == nil || *page.NextCursor == "" {
-			return out, nil
-		}
-		cursor = *page.NextCursor
+		out = append(out, *item)
 	}
-	return nil, fmt.Errorf("operator: listing %s: no last page after %d pages", path, maxWalkPages)
+	return out, nil
 }
 
 // retryAfter parses a Retry-After header given in seconds; anything else is zero.

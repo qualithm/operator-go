@@ -22,16 +22,16 @@ type UpdateDeviceInput struct {
 }
 
 // ListDevices returns a page of devices for the token's team.
-func (c *Client) ListDevices(ctx context.Context, page, limit int) (Page[Device], error) {
+func (c *Client) ListDevices(ctx context.Context, cursor string, limit int) (Page[Device], error) {
 	var out Page[Device]
-	err := c.do(ctx, http.MethodGet, "{team}/devices"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/devices"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 
 // ListSpaceDevices returns a page of the team's devices in one space.
-func (c *Client) ListSpaceDevices(ctx context.Context, spaceID string, page, limit int) (Page[Device], error) {
+func (c *Client) ListSpaceDevices(ctx context.Context, spaceID string, cursor string, limit int) (Page[Device], error) {
 	var out Page[Device]
-	err := c.do(ctx, http.MethodGet, "{team}/devices"+filterQuery("spaceId", spaceID, page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/devices"+filterQuery("spaceId", spaceID, cursor, limit), nil, &out)
 	return out, err
 }
 

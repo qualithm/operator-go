@@ -26,9 +26,9 @@ type UpdateDashboardInput struct {
 }
 
 // ListDashboards returns a page of dashboards for the token's team.
-func (c *Client) ListDashboards(ctx context.Context, page, limit int) (Page[Dashboard], error) {
+func (c *Client) ListDashboards(ctx context.Context, cursor string, limit int) (Page[Dashboard], error) {
 	var out Page[Dashboard]
-	err := c.do(ctx, http.MethodGet, "{team}/dashboards"+pageQuery(page, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/dashboards"+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 
