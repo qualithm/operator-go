@@ -178,7 +178,7 @@ func TestDryRunShortCircuitsMutations(t *testing.T) {
 		return jsonResponse(201, `{}`), nil
 	}, WithDryRun(true), WithRecorder(func(a Action) { recorded = a }))
 
-	_, err := c.CreateEnrollment(context.Background(), CreateEnrollmentInput{SpaceID: "spc_1"})
+	_, err := c.CreateEnrollment(context.Background(), CreateEnrollmentInput{ScopeID: "spc_1"})
 	var dre *DryRunError
 	if !errors.As(err, &dre) {
 		t.Fatalf("expected DryRunError, got %T: %v", err, err)

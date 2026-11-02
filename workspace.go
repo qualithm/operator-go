@@ -114,10 +114,3 @@ func (c *Client) ListZones(ctx context.Context) (Zones, error) {
 	err := c.do(ctx, http.MethodGet, "/v1/zones", nil, &out)
 	return out, err
 }
-
-// ListZoneSpaces returns a page of the team's spaces in the given device zone.
-func (c *Client) ListZoneSpaces(ctx context.Context, zone, cursor string, limit int) (Page[Space], error) {
-	var out Page[Space]
-	err := c.do(ctx, http.MethodGet, "{team}/spaces"+filterQuery("zone", zone, cursor, limit), nil, &out)
-	return out, err
-}

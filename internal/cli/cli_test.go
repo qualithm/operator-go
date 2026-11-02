@@ -61,7 +61,7 @@ func TestEnrollmentCreateDryRun(t *testing.T) {
 		t.Fatal("dry-run must not hit the network")
 		return nil, nil
 	})
-	code := Run(context.Background(), env, []string{"enrollment", "create", "--space", "spc_1", "--token", "qmt_x.y", "--dry-run"})
+	code := Run(context.Background(), env, []string{"enrollment", "create", "--scope", "spc_1", "--token", "qmt_x.y", "--dry-run"})
 	if code != ExitOK {
 		t.Fatalf("exit = %d", code)
 	}
@@ -100,7 +100,7 @@ func TestUnknownCommand(t *testing.T) {
 
 func TestApplyDryRunReportsPlan(t *testing.T) {
 	env, out, _ := testEnv(func(req *http.Request) (*http.Response, error) {
-		// Space has no existing devices, so both manifest devices are missing.
+		// Scope has no existing devices, so both manifest devices are missing.
 		if req.Method == http.MethodGet {
 			return jsonResp(200, `{"data":{"current":1,"items":[],"last":1}}`), nil
 		}
@@ -110,7 +110,7 @@ func TestApplyDryRunReportsPlan(t *testing.T) {
 
 	dir := t.TempDir()
 	path := filepath.Join(dir, "fleet.yaml")
-	manifest := "spaces:\n  - id: spc_1\n    devices:\n      - name: sensor-a\n      - name: sensor-b\n"
+	manifest := "scopes:\n  - id: spc_1\n    devices:\n      - name: sensor-a\n      - name: sensor-b\n"
 	if err := os.WriteFile(path, []byte(manifest), 0o600); err != nil {
 		t.Fatal(err)
 	}
