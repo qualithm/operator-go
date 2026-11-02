@@ -158,7 +158,7 @@ func TestRevokeCredential(t *testing.T) {
 
 func TestListEnrollments(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"enr_1","spaceId":"spc_1"}],"last":1}}`, &rec)
+	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"enr_1","scopeId":"spc_1"}],"last":1}}`, &rec)
 	page, err := c.ListEnrollments(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
@@ -184,12 +184,12 @@ func TestRevokeEnrollment(t *testing.T) {
 
 func TestCreateDevice(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 201, `{"data":{"id":"dev_1","spaceId":"spc_1"}}`, &rec)
-	got, err := c.CreateDevice(context.Background(), CreateDeviceInput{SpaceID: "spc_1"})
+	c := recClient(t, 201, `{"data":{"id":"dev_1","scopeId":"spc_1"}}`, &rec)
+	got, err := c.CreateDevice(context.Background(), CreateDeviceInput{ScopeID: "spc_1"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/devices" || rec.body["spaceId"] != "spc_1" {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/devices" || rec.body["scopeId"] != "spc_1" {
 		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
 	}
 	if got.ID != "dev_1" {
@@ -219,25 +219,25 @@ func TestDeleteDevice(t *testing.T) {
 	}
 }
 
-func TestListSpaceDevices(t *testing.T) {
+func TestListScopeDevices(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"dev_1"}],"last":1}}`, &rec)
-	if _, err := c.ListSpaceDevices(context.Background(), "spc_1", "", 100); err != nil {
+	if _, err := c.ListScopeDevices(context.Background(), "spc_1", "", 100); err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/devices" || rec.query != "limit=100&spaceId=spc_1" {
+	if rec.path != "/v1/teams/team_1/devices" || rec.query != "limit=100&scopeId=spc_1" {
 		t.Fatalf("request = %s?%s", rec.path, rec.query)
 	}
 }
 
-func TestListSpaces(t *testing.T) {
+func TestListScopes(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"spc_1","zone":"de-fra-a","deviceTotal":2}],"last":1}}`, &rec)
-	page, err := c.ListSpaces(context.Background(), "", 0)
+	page, err := c.ListScopes(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/spaces" || rec.query != "" {
+	if rec.path != "/v1/teams/team_1/scopes" || rec.query != "" {
 		t.Fatalf("request = %s?%s", rec.path, rec.query)
 	}
 	if page.Items[0].ID != "spc_1" || page.Items[0].Zone != "de-fra-a" || page.Items[0].DeviceTotal != 2 {
@@ -245,54 +245,90 @@ func TestListSpaces(t *testing.T) {
 	}
 }
 
-func TestGetSpace(t *testing.T) {
+func TestGetScope(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"id":"spc_1","name":"edge","zone":"sg-sin-a"}}`, &rec)
-	got, err := c.GetSpace(context.Background(), "spc_1")
+	got, err := c.GetScope(context.Background(), "spc_1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/spaces/spc_1" {
+	if rec.path != "/v1/teams/team_1/scopes/spc_1" {
 		t.Fatalf("path = %q", rec.path)
 	}
 	if got.Name != "edge" || got.Zone != "sg-sin-a" {
-		t.Fatalf("space = %+v", got)
+		t.Fatalf("scope = %+v", got)
 	}
 }
 
-func TestCreateSpace(t *testing.T) {
+func TestCreateScope(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 201, `{"data":{"id":"spc_1","zone":"de-fra-a"}}`, &rec)
-	got, err := c.CreateSpace(context.Background(), CreateSpaceInput{Zone: "de-fra-a"})
+	c := recClient(t, 201, `{"data":{"id":"spc_1","name":"hall","zone":"de-fra-a","parentId":null}}`, &rec)
+	got, err := c.CreateScope(context.Background(), CreateScopeInput{Name: "hall", Zone: "de-fra-a"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/spaces" || rec.body["zone"] != "de-fra-a" {
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/scopes" || rec.body["zone"] != "de-fra-a" || rec.body["name"] != "hall" {
 		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
 	}
-	if got.ID != "spc_1" {
-		t.Fatalf("space = %+v", got)
+	if _, ok := rec.body["parentId"]; ok {
+		t.Fatalf("top-level create sent parentId: %+v", rec.body)
+	}
+	if got.ID != "spc_1" || got.ParentID != nil {
+		t.Fatalf("scope = %+v", got)
 	}
 }
 
-func TestUpdateSpace(t *testing.T) {
+func TestCreateChildScope(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 200, `{"message":"ok"}`, &rec)
-	if err := c.UpdateSpace(context.Background(), "spc_1", "edge"); err != nil {
+	c := recClient(t, 201, `{"data":{"id":"spc_2","name":"bench","zone":"de-fra-a","parentId":"spc_1"}}`, &rec)
+	got, err := c.CreateScope(context.Background(), CreateScopeInput{Name: "bench", ParentID: "spc_1"})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPatch || rec.path != "/v1/teams/team_1/spaces/spc_1" || rec.body["name"] != "edge" {
+	if rec.body["parentId"] != "spc_1" {
+		t.Fatalf("body = %+v", rec.body)
+	}
+	if _, ok := rec.body["zone"]; ok {
+		t.Fatalf("child create sent zone: %+v", rec.body)
+	}
+	if got.ParentID == nil || *got.ParentID != "spc_1" || got.Zone != "de-fra-a" {
+		t.Fatalf("scope = %+v", got)
+	}
+}
+
+func TestListScopeSubtreeDevices(t *testing.T) {
+	var rec recorder
+	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"dev_1","scopeId":"spc_2"}],"last":1}}`, &rec)
+	page, err := c.ListScopeSubtreeDevices(context.Background(), "spc_1", "", 50)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.path != "/v1/teams/team_1/scopes/spc_1/devices" || rec.query != "limit=50" {
+		t.Fatalf("request = %s?%s", rec.path, rec.query)
+	}
+	if len(page.Items) != 1 || page.Items[0].ScopeID != "spc_2" {
+		t.Fatalf("page = %+v", page)
+	}
+}
+
+func TestUpdateScope(t *testing.T) {
+	var rec recorder
+	c := recClient(t, 200, `{"message":"ok"}`, &rec)
+	if err := c.UpdateScope(context.Background(), "spc_1", "edge"); err != nil {
+		t.Fatal(err)
+	}
+	if rec.method != http.MethodPatch || rec.path != "/v1/teams/team_1/scopes/spc_1" || rec.body["name"] != "edge" {
 		t.Fatalf("request = %s %s body=%+v", rec.method, rec.path, rec.body)
 	}
 }
 
-func TestDeleteSpace(t *testing.T) {
+func TestDeleteScope(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"message":"ok"}`, &rec)
-	if err := c.DeleteSpace(context.Background(), "spc_1"); err != nil {
+	if err := c.DeleteScope(context.Background(), "spc_1"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/spaces/spc_1" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/scopes/spc_1" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 }
@@ -372,7 +408,7 @@ func TestErrorWithoutMessageStillMapsStatus(t *testing.T) {
 	c := newTestClient(t, func(req *http.Request) (*http.Response, error) {
 		return jsonResponse(409, `{}`), nil
 	})
-	_, err := c.CreateDevice(context.Background(), CreateDeviceInput{SpaceID: "spc_1"})
+	_, err := c.CreateDevice(context.Background(), CreateDeviceInput{ScopeID: "spc_1"})
 	var ce *ClientError
 	if !errors.As(err, &ce) || ce.StatusCode != 409 {
 		t.Fatalf("err = %v", err)

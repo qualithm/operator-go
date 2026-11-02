@@ -12,13 +12,13 @@ import (
 	operator "github.com/qualithm/operator-go"
 )
 
-// manifest is a device-as-code description of desired fleet state. Reconcile is
-// currently scoped to devices within named spaces, matched by device name.
+// manifest is a device-as-code description of desired fleet state. Reconcile
+// covers the devices directly in each named scope, matched by device name.
 type manifest struct {
-	Spaces []manifestSpace `yaml:"spaces" json:"spaces"`
+	Scopes []manifestScope `yaml:"scopes" json:"scopes"`
 }
 
-type manifestSpace struct {
+type manifestScope struct {
 	ID      string           `yaml:"id" json:"id"`
 	Devices []manifestDevice `yaml:"devices" json:"devices"`
 }
@@ -29,7 +29,7 @@ type manifestDevice struct {
 
 // applyResult is one reconcile decision, emitted in the JSON/human report.
 type applyResult struct {
-	Space  string `json:"space"`
+	Scope  string `json:"scope"`
 	Device string `json:"device"`
 	Action string `json:"action"` // "create" | "exists" | "would-create"
 	ID     string `json:"id,omitempty"`
@@ -57,8 +57,8 @@ func runApply(ctx context.Context, env Env, args []string) int {
 		_, _ = fmt.Fprintf(env.Stderr, "qualithm: parse manifest: %v\n", err)
 		return ExitUsage
 	}
-	if len(m.Spaces) == 0 {
-		_, _ = fmt.Fprintln(env.Stderr, "qualithm: manifest declares no spaces")
+	if len(m.Scopes) == 0 {
+		_, _ = fmt.Fprintln(env.Stderr, "qualithm: manifest declares no scopes")
 		return ExitUsage
 	}
 
@@ -76,43 +76,43 @@ func runApply(ctx context.Context, env Env, args []string) int {
 		return emitJSON(env, results)
 	}
 	tw := newTable(env.Stdout)
-	row(tw, "SPACE", "DEVICE", "ACTION", "ID")
+	row(tw, "SCOPE", "DEVICE", "ACTION", "ID")
 	for _, r := range results {
-		row(tw, r.Space, r.Device, r.Action, dash(r.ID))
+		row(tw, r.Scope, r.Device, r.Action, dash(r.ID))
 	}
 	_ = tw.Flush()
 	return ExitOK
 }
 
 // reconcile compares the manifest against live state and creates missing
-// devices (matched by name within a space). It is idempotent: devices that
+// devices (matched by name within a scope). It is idempotent: devices that
 // already exist are reported as "exists" and left untouched. In dry-run mode
 // creates are reported as "would-create" without mutating anything.
 func reconcile(ctx context.Context, env Env, client *operator.Client, m manifest) ([]applyResult, int) {
 	var results []applyResult
-	for _, space := range m.Spaces {
-		if space.ID == "" {
-			_, _ = fmt.Fprintln(env.Stderr, "qualithm: manifest space is missing an id")
+	for _, scope := range m.Scopes {
+		if scope.ID == "" {
+			_, _ = fmt.Fprintln(env.Stderr, "qualithm: manifest scope is missing an id")
 			return nil, ExitUsage
 		}
-		existing, err := listSpaceDeviceNames(ctx, client, space.ID)
+		existing, err := listScopeDeviceNames(ctx, client, scope.ID)
 		if err != nil {
 			return nil, reportError(env, err)
 		}
-		for _, dev := range space.Devices {
+		for _, dev := range scope.Devices {
 			if dev.Name == "" {
 				_, _ = fmt.Fprintln(env.Stderr, "qualithm: manifest device is missing a name")
 				return nil, ExitUsage
 			}
 			if _, ok := existing[dev.Name]; ok {
-				results = append(results, applyResult{Space: space.ID, Device: dev.Name, Action: "exists"})
+				results = append(results, applyResult{Scope: scope.ID, Device: dev.Name, Action: "exists"})
 				continue
 			}
-			created, err := client.CreateDevice(ctx, operator.CreateDeviceInput{SpaceID: space.ID})
+			created, err := client.CreateDevice(ctx, operator.CreateDeviceInput{ScopeID: scope.ID})
 			var dre *operator.DryRunError
 			switch {
 			case errors.As(err, &dre):
-				results = append(results, applyResult{Space: space.ID, Device: dev.Name, Action: "would-create"})
+				results = append(results, applyResult{Scope: scope.ID, Device: dev.Name, Action: "would-create"})
 			case err != nil:
 				return nil, reportError(env, err)
 			default:
@@ -121,19 +121,19 @@ func reconcile(ctx context.Context, env Env, client *operator.Client, m manifest
 				if uerr := client.UpdateDevice(ctx, created.ID, operator.UpdateDeviceInput{Name: dev.Name}); uerr != nil {
 					return nil, reportError(env, uerr)
 				}
-				results = append(results, applyResult{Space: space.ID, Device: dev.Name, Action: "create", ID: created.ID})
+				results = append(results, applyResult{Scope: scope.ID, Device: dev.Name, Action: "create", ID: created.ID})
 			}
 		}
 	}
 	return results, -1
 }
 
-// listSpaceDeviceNames returns the set of device names in a space, paging
-// through all results.
-func listSpaceDeviceNames(ctx context.Context, client *operator.Client, spaceID string) (map[string]struct{}, error) {
+// listScopeDeviceNames returns the set of device names directly in a scope,
+// paging through all results.
+func listScopeDeviceNames(ctx context.Context, client *operator.Client, scopeID string) (map[string]struct{}, error) {
 	names := map[string]struct{}{}
 	fetch := func(ctx context.Context, cursor string) (operator.Page[operator.Device], error) {
-		return client.ListSpaceDevices(ctx, spaceID, cursor, operator.WalkLimit)
+		return client.ListScopeDevices(ctx, scopeID, cursor, operator.WalkLimit)
 	}
 	for d, err := range operator.All(ctx, fetch) {
 		if err != nil {

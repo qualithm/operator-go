@@ -8,20 +8,20 @@ import (
 )
 
 // CreateDashboardInput is the request body for [Client.CreateDashboard]. A nil
-// SpaceID creates a team-wide dashboard; Payload is the ordered widget array
+// ScopeID creates a team-wide dashboard; Payload is the ordered widget array
 // (nil starts empty).
 type CreateDashboardInput struct {
 	Name    string          `json:"name"`
-	SpaceID *string         `json:"spaceId,omitempty"`
+	ScopeID *string         `json:"scopeId,omitempty"`
 	Payload json.RawMessage `json:"payload,omitempty"`
 }
 
 // UpdateDashboardInput is the request body for [Client.UpdateDashboard]. Nil
-// fields are left unchanged; the API does not accept clearing the space
+// fields are left unchanged; the API does not accept clearing the scope
 // through this client.
 type UpdateDashboardInput struct {
 	Name    string          `json:"name,omitempty"`
-	SpaceID *string         `json:"spaceId,omitempty"`
+	ScopeID *string         `json:"scopeId,omitempty"`
 	Payload json.RawMessage `json:"payload,omitempty"`
 }
 
@@ -46,7 +46,7 @@ func (c *Client) GetDashboard(ctx context.Context, dashboardID string) (Dashboar
 	return out, err
 }
 
-// UpdateDashboard updates a dashboard's name, space, or widgets. This
+// UpdateDashboard updates a dashboard's name, scope, or widgets. This
 // endpoint returns no resource body.
 func (c *Client) UpdateDashboard(ctx context.Context, dashboardID string, in UpdateDashboardInput) error {
 	return c.do(ctx, http.MethodPatch, fmt.Sprintf("{team}/dashboards/%s", dashboardID), in, nil)
