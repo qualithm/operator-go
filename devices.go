@@ -8,14 +8,14 @@ import (
 
 // CreateDeviceInput is the request body for [Client.CreateDevice].
 type CreateDeviceInput struct {
-	SpaceID string `json:"spaceId"`
+	ScopeID string `json:"scopeId"`
 }
 
 // UpdateDeviceInput is the request body for [Client.UpdateDevice]. At least
 // one field must be set.
 type UpdateDeviceInput struct {
 	Name    string `json:"name,omitempty"`
-	SpaceID string `json:"spaceId,omitempty"`
+	ScopeID string `json:"scopeId,omitempty"`
 	// Parked, when set, parks or unparks the device: a parked device can't
 	// connect and doesn't count against the plan's active-device limit.
 	Parked *bool `json:"parked,omitempty"`
@@ -28,10 +28,11 @@ func (c *Client) ListDevices(ctx context.Context, cursor string, limit int) (Pag
 	return out, err
 }
 
-// ListSpaceDevices returns a page of the team's devices in one space.
-func (c *Client) ListSpaceDevices(ctx context.Context, spaceID string, cursor string, limit int) (Page[Device], error) {
+// ListScopeDevices returns a page of the team's devices in one scope, not
+// counting the scopes under it; see [Client.ListScopeSubtreeDevices].
+func (c *Client) ListScopeDevices(ctx context.Context, scopeID string, cursor string, limit int) (Page[Device], error) {
 	var out Page[Device]
-	err := c.do(ctx, http.MethodGet, "{team}/devices"+filterQuery("spaceId", spaceID, cursor, limit), nil, &out)
+	err := c.do(ctx, http.MethodGet, "{team}/devices"+filterQuery("scopeId", scopeID, cursor, limit), nil, &out)
 	return out, err
 }
 
@@ -42,14 +43,14 @@ func (c *Client) GetDevice(ctx context.Context, deviceID string) (Device, error)
 	return out, err
 }
 
-// CreateDevice creates a device in a space.
+// CreateDevice creates a device in a scope.
 func (c *Client) CreateDevice(ctx context.Context, in CreateDeviceInput) (Device, error) {
 	var out Device
 	err := c.do(ctx, http.MethodPost, "{team}/devices", in, &out)
 	return out, err
 }
 
-// UpdateDevice renames a device and/or moves it to another space in the same
+// UpdateDevice renames a device and/or moves it to another scope in the same
 // zone. This endpoint returns no resource body.
 func (c *Client) UpdateDevice(ctx context.Context, deviceID string, in UpdateDeviceInput) error {
 	return c.do(ctx, http.MethodPatch, fmt.Sprintf("{team}/devices/%s", deviceID), in, nil)

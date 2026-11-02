@@ -45,8 +45,8 @@ export QUALITHM_API_TOKEN=qmt_...
 # list devices as a table
 qualithm device list
 
-# create a time-boxed enrollment code for a space
-qualithm enrollment create --space spc_123 --label lab-floor-2
+# create a time-boxed enrollment code for a scope
+qualithm enrollment create --scope spc_123 --label lab-floor-2
 
 # mint a device credential, machine-readable
 qualithm credential mint --device dev_123 --json
@@ -75,7 +75,7 @@ Every verb accepts the global flags, before or after its positional arguments:
 | `enrollment` | `list` · `create` · `revoke <id>`                              |
 | `credential` | `list` · `mint` · `cert` · `rotate` · `revoke`                 |
 | `device`     | `list` · `get <id>` · `create` · `update <id>` · `delete <id>` |
-| `space`      | `list` · `get <id>` · `create` · `update <id>` · `delete <id>` |
+| `scope`      | `list` · `get <id>` · `create` · `update <id>` · `delete <id>` |
 | `token`      | `list` · `create` · `revoke <id>`                              |
 | `apply`      | `<manifest.yaml>` — idempotent device-as-code reconcile        |
 | `version`    | print the CLI version                                          |
@@ -84,9 +84,14 @@ Every verb accepts the global flags, before or after its positional arguments:
 
 ```bash
 # devices
-qualithm device list --space spc_123 --json
+qualithm device list --scope spc_123 --json
 qualithm device get dev_123
-qualithm device create --space spc_123 --name gateway-01
+qualithm device create --scope spc_123
+qualithm device update dev_123 --name gateway-01
+
+# scopes: top-level in a zone, or nested under a parent
+qualithm scope create --name factory --zone de-fra-a
+qualithm scope create --name line-1 --parent spc_123
 
 # credentials (one-time secrets are printed once, on create)
 qualithm credential mint --device dev_123 --label rotate-2027 --expires-at 2027-12-31T00:00:00Z
@@ -102,12 +107,12 @@ qualithm authority create --name fleet-ca --kind byo --cert-file ca.pem
 
 ### device-as-code with `apply`
 
-`apply` reconciles a fleet manifest, creating any missing devices (matched by name within a space)
+`apply` reconciles a fleet manifest, creating any missing devices (matched by name within a scope)
 and leaving existing ones untouched. Combine with `--dry-run` to preview.
 
 ```yaml
 # fleet.yaml
-spaces:
+scopes:
   - id: spc_123
     devices:
       - name: gateway-01
@@ -134,8 +139,8 @@ qualithm apply fleet.yaml             # apply
 | 8    | unavailable (503)      |
 
 403 is not always a missing permission — a paused zone also returns it:
-`qualithm space create --zone <x>` returns exit code 3 with
-`Zone rejects creation in this environment` while the zone is paused. Pick an open zone:
+`qualithm scope create --name <n> --zone <x>` returns exit code 3 with
+`zone is not open for new scopes in this environment` while the zone is paused. Pick an open zone:
 `Client.ListZones` reports which zones the environment has open.
 
 ### Using the client library

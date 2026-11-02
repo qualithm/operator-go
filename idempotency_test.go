@@ -15,7 +15,7 @@ func TestIdempotencyKey(t *testing.T) {
 	})
 
 	for range 2 {
-		if _, err := c.CreateSpace(context.Background(), CreateSpaceInput{Zone: "sg-sin-a"}); err != nil {
+		if _, err := c.CreateScope(context.Background(), CreateScopeInput{Name: "edge", Zone: "sg-sin-a"}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -25,7 +25,7 @@ func TestIdempotencyKey(t *testing.T) {
 
 	ctx := WithIdempotencyKey(context.Background(), "retry-1")
 	for range 2 {
-		if _, err := c.CreateSpace(ctx, CreateSpaceInput{Zone: "sg-sin-a"}); err != nil {
+		if _, err := c.CreateScope(ctx, CreateScopeInput{Name: "edge", Zone: "sg-sin-a"}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -33,7 +33,7 @@ func TestIdempotencyKey(t *testing.T) {
 		t.Fatalf("a retry should reuse the caller's key, got %q", keys[2:])
 	}
 
-	if _, err := c.ListSpaces(context.Background(), "", 0); err != nil {
+	if _, err := c.ListScopes(context.Background(), "", 0); err != nil {
 		t.Fatal(err)
 	}
 	if keys[4] != "" {

@@ -37,7 +37,7 @@ func runDevice(ctx context.Context, env Env, args []string) int {
 func deviceList(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("device list", flag.ContinueOnError)
 	cf := addCommon(fs)
-	space := fs.String("space", "", "restrict to a space id")
+	scope := fs.String("scope", "", "restrict to a scope id")
 	cursor := fs.String("cursor", "", "resume after a page, from the cursor it printed")
 	limit := fs.Int("limit", 0, "items per page (max 100)")
 	if code := parseNone(env, fs, args); code >= 0 {
@@ -49,19 +49,19 @@ func deviceList(ctx context.Context, env Env, args []string) int {
 	}
 	var res operator.Page[operator.Device]
 	var err error
-	if *space != "" {
-		res, err = client.ListSpaceDevices(ctx, *space, *cursor, *limit)
+	if *scope != "" {
+		res, err = client.ListScopeDevices(ctx, *scope, *cursor, *limit)
 	} else {
 		res, err = client.ListDevices(ctx, *cursor, *limit)
 	}
 	return cf.report(env, res, func(w io.Writer) {
 		tw := newTable(w)
-		row(tw, "ID", "NAME", "SPACE", "SPACE-NAME")
+		row(tw, "ID", "NAME", "SCOPE")
 		for _, d := range res.Items {
 			if d == nil {
 				continue
 			}
-			row(tw, d.ID, dash(d.Name), d.SpaceID, dash(d.SpaceName))
+			row(tw, d.ID, dash(d.Name), d.ScopeID)
 		}
 		_ = tw.Flush()
 		nextPage(w, res.NextCursor)
@@ -88,8 +88,7 @@ func deviceGet(ctx context.Context, env Env, args []string) int {
 		tw := newTable(w)
 		row(tw, "id", res.ID)
 		row(tw, "name", dash(res.Name))
-		row(tw, "space", res.SpaceID)
-		row(tw, "spaceName", dash(res.SpaceName))
+		row(tw, "scope", res.ScopeID)
 		row(tw, "createdAt", when(res.CreatedAt))
 		_ = tw.Flush()
 	}, err)
@@ -98,21 +97,21 @@ func deviceGet(ctx context.Context, env Env, args []string) int {
 func deviceCreate(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("device create", flag.ContinueOnError)
 	cf := addCommon(fs)
-	space := fs.String("space", "", "space id (required)")
+	scope := fs.String("scope", "", "scope id (required)")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
 	}
-	if *space == "" {
-		_, _ = fmt.Fprintln(env.Stderr, "qualithm: --space is required")
+	if *scope == "" {
+		_, _ = fmt.Fprintln(env.Stderr, "qualithm: --scope is required")
 		return ExitUsage
 	}
 	client, code := cf.client(env)
 	if code >= 0 {
 		return code
 	}
-	res, err := client.CreateDevice(ctx, operator.CreateDeviceInput{SpaceID: *space})
+	res, err := client.CreateDevice(ctx, operator.CreateDeviceInput{ScopeID: *scope})
 	return cf.report(env, res, func(w io.Writer) {
-		_, _ = fmt.Fprintf(w, "device %s (%s) created in space %s\n", res.ID, res.Name, res.SpaceID)
+		_, _ = fmt.Fprintf(w, "device %s (%s) created in scope %s\n", res.ID, res.Name, res.ScopeID)
 	}, err)
 }
 
@@ -120,7 +119,7 @@ func deviceUpdate(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("device update", flag.ContinueOnError)
 	cf := addCommon(fs)
 	name := fs.String("name", "", "new device name")
-	space := fs.String("space", "", "move to this space id (same zone)")
+	scope := fs.String("scope", "", "move to this scope id (same zone)")
 	id, code := parseOne(env, fs, args)
 	if code >= 0 {
 		return code
@@ -129,15 +128,15 @@ func deviceUpdate(ctx context.Context, env Env, args []string) int {
 		_, _ = fmt.Fprintln(env.Stderr, "qualithm: device id is required")
 		return ExitUsage
 	}
-	if *name == "" && *space == "" {
-		_, _ = fmt.Fprintln(env.Stderr, "qualithm: set --name and/or --space")
+	if *name == "" && *scope == "" {
+		_, _ = fmt.Fprintln(env.Stderr, "qualithm: set --name and/or --scope")
 		return ExitUsage
 	}
 	client, code := cf.client(env)
 	if code >= 0 {
 		return code
 	}
-	err := client.UpdateDevice(ctx, id, operator.UpdateDeviceInput{Name: *name, SpaceID: *space})
+	err := client.UpdateDevice(ctx, id, operator.UpdateDeviceInput{Name: *name, ScopeID: *scope})
 	return cf.report(env, okMessage{Message: "device updated", ID: id}, func(w io.Writer) {
 		_, _ = fmt.Fprintf(w, "device %s updated\n", id)
 	}, err)

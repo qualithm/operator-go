@@ -284,12 +284,12 @@ func TestTriggerAutomationUsesSecret(t *testing.T) {
 
 func TestDashboards(t *testing.T) {
 	var rec recorder
-	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"dash_1","spaceId":null}],"last":1}}`, &rec)
+	c := recClient(t, 200, `{"data":{"current":1,"items":[{"id":"dash_1","scopeId":null}],"last":1}}`, &rec)
 	page, err := c.ListDashboards(context.Background(), "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/dashboards" || len(page.Items) != 1 || page.Items[0].SpaceID != nil {
+	if rec.path != "/v1/teams/team_1/dashboards" || len(page.Items) != 1 || page.Items[0].ScopeID != nil {
 		t.Fatalf("path = %q page = %+v", rec.path, page)
 	}
 
@@ -392,7 +392,7 @@ func TestObservability(t *testing.T) {
 		t.Fatalf("points = %+v", pts)
 	}
 
-	c = recClient(t, 200, `{"data":{"deviceTotal":3,"deviceMax":10,"spaceTotal":2}}`, &rec)
+	c = recClient(t, 200, `{"data":{"deviceTotal":3,"deviceMax":10}}`, &rec)
 	usage, err := c.GetUsage(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -534,12 +534,12 @@ func TestWorkspace(t *testing.T) {
 	}
 
 	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"spc_1","zone":"us"}],"last":1}}`, &rec)
-	spaces, err := c.ListZoneSpaces(context.Background(), "us", "", 0)
+	scopes, err := c.ListZoneScopes(context.Background(), "us", "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/spaces" || rec.query != "zone=us" || len(spaces.Items) != 1 {
-		t.Fatalf("path = %q spaces = %+v", rec.path, spaces)
+	if rec.path != "/v1/teams/team_1/scopes" || rec.query != "zone=us" || len(scopes.Items) != 1 {
+		t.Fatalf("path = %q scopes = %+v", rec.path, scopes)
 	}
 }
 
