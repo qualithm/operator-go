@@ -45,12 +45,12 @@ func enrollmentList(ctx context.Context, env Env, args []string) int {
 	res, err := client.ListEnrollments(ctx, *cursor, *limit)
 	return cf.report(env, res, func(w io.Writer) {
 		tw := newTable(w)
-		row(tw, "ID", "SPACE", "LABEL", "STATUS", "EXPIRES")
+		row(tw, "ID", "SCOPE", "LABEL", "STATUS", "EXPIRES")
 		for _, e := range res.Items {
 			if e == nil {
 				continue
 			}
-			row(tw, e.ID, e.SpaceID, dash(e.Label), e.Status, when(e.ExpiresAt))
+			row(tw, e.ID, e.ScopeID, dash(e.Label), e.Status, when(e.ExpiresAt))
 		}
 		_ = tw.Flush()
 		nextPage(w, res.NextCursor)
@@ -60,14 +60,14 @@ func enrollmentList(ctx context.Context, env Env, args []string) int {
 func enrollmentCreate(ctx context.Context, env Env, args []string) int {
 	fs := flag.NewFlagSet("enrollment create", flag.ContinueOnError)
 	cf := addCommon(fs)
-	space := fs.String("space", "", "space id (required)")
+	scope := fs.String("scope", "", "scope id (required)")
 	label := fs.String("label", "", "enrollment label")
 	expires := fs.Int("expires-minutes", 0, "minutes until the code expires (default 1440)")
 	if code := parseNone(env, fs, args); code >= 0 {
 		return code
 	}
-	if *space == "" {
-		_, _ = fmt.Fprintln(env.Stderr, "qualithm: --space is required")
+	if *scope == "" {
+		_, _ = fmt.Fprintln(env.Stderr, "qualithm: --scope is required")
 		return ExitUsage
 	}
 	client, code := cf.client(env)
@@ -75,12 +75,12 @@ func enrollmentCreate(ctx context.Context, env Env, args []string) int {
 		return code
 	}
 	res, err := client.CreateEnrollment(ctx, operator.CreateEnrollmentInput{
-		SpaceID:          *space,
+		ScopeID:          *scope,
 		Label:            *label,
 		ExpiresInMinutes: *expires,
 	})
 	return cf.report(env, res, func(w io.Writer) {
-		_, _ = fmt.Fprintf(w, "enrollment %s created for space %s\n", res.Enrollment.ID, res.Enrollment.SpaceID)
+		_, _ = fmt.Fprintf(w, "enrollment %s created for scope %s\n", res.Enrollment.ID, res.Enrollment.ScopeID)
 		_, _ = fmt.Fprintf(w, "claim code (shown once): %s\n", res.Code)
 	}, err)
 }

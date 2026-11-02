@@ -31,7 +31,7 @@ type Authority struct {
 type Enrollment struct {
 	ID              string    `json:"id"`
 	TeamID          string    `json:"teamId"`
-	SpaceID         string    `json:"spaceId"`
+	ScopeID         string    `json:"scopeId"`
 	Label           string    `json:"label"`
 	Status          string    `json:"status"` // "pending" | "claimed" | ...
 	ClaimedDeviceID string    `json:"claimedDeviceId"`
@@ -80,14 +80,13 @@ type CertCredential struct {
 	CACertificatePEM string     `json:"caCertificatePem"`
 }
 
-// Device is a device resource with its space context. The optional fields are
-// nil or empty when the platform doesn't send them.
+// Device is a device resource with the scope it belongs to. The optional
+// fields are nil or empty when the platform doesn't send them.
 type Device struct {
 	ID        string    `json:"id"`
-	SpaceID   string    `json:"spaceId"`
+	ScopeID   string    `json:"scopeId"`
 	Name      string    `json:"name"`
 	TeamID    string    `json:"teamId"`
-	SpaceName string    `json:"spaceName"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 	// ParkedAt is set while the device is parked: it cannot connect or write.
@@ -115,12 +114,16 @@ type DeviceCheck struct {
 	Evidence string `json:"evidence"`
 }
 
-// Space is a space resource: the zone-scoped container devices live in.
-type Space struct {
-	ID          string    `json:"id"`
-	TeamID      string    `json:"teamId"`
-	Name        string    `json:"name"`
-	Zone        string    `json:"zone"`
+// Scope is a group of devices in one zone. Scopes nest; each device belongs
+// to exactly one.
+type Scope struct {
+	ID     string `json:"id"`
+	TeamID string `json:"teamId"`
+	// ParentID is the parent scope; nil for a top-level scope.
+	ParentID *string `json:"parentId"`
+	Name     string  `json:"name"`
+	Zone     string  `json:"zone"`
+	// DeviceTotal counts the live devices in the scope and every scope under it.
 	DeviceTotal int       `json:"deviceTotal"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
@@ -221,15 +224,15 @@ type AutomationPayload struct {
 	Template *AutomationTemplateReference `json:"template,omitempty"`
 }
 
-// Automation is an automation resource with its space context.
+// Automation is an automation resource with the scope it applies to; a nil
+// ScopeID is team-wide.
 type Automation struct {
 	ID            string            `json:"id"`
 	TeamID        string            `json:"teamId"`
-	SpaceID       *string           `json:"spaceId"`
+	ScopeID       *string           `json:"scopeId"`
 	Name          string            `json:"name"`
 	Enabled       bool              `json:"enabled"`
 	Payload       AutomationPayload `json:"payload"`
-	SpaceName     *string           `json:"spaceName"`
 	TemplateDrift bool              `json:"templateDrift,omitempty"`
 	CreatedAt     time.Time         `json:"createdAt"`
 	UpdatedAt     time.Time         `json:"updatedAt"`
@@ -273,15 +276,14 @@ type AutomationTemplateSlot struct {
 	Kind string `json:"kind"` // "channel" | "device" | "metric" | "control" | "recipient" | "range" | "schedule" | "value"
 }
 
-// Dashboard is a dashboard resource with its space context. Payload is the
-// ordered widget array.
+// Dashboard is a dashboard resource with the scope it shows; a nil ScopeID
+// is team-wide. Payload is the ordered widget array.
 type Dashboard struct {
 	ID        string          `json:"id"`
 	TeamID    string          `json:"teamId"`
-	SpaceID   *string         `json:"spaceId"`
+	ScopeID   *string         `json:"scopeId"`
 	Name      string          `json:"name"`
 	Payload   json.RawMessage `json:"payload"`
-	SpaceName *string         `json:"spaceName"`
 	CreatedAt time.Time       `json:"createdAt"`
 	UpdatedAt time.Time       `json:"updatedAt"`
 }
@@ -320,7 +322,7 @@ type DeviceCapability struct {
 // DeviceStateSnapshot is one device's latest sighting.
 type DeviceStateSnapshot struct {
 	DeviceID   string             `json:"deviceId"`
-	SpaceID    string             `json:"spaceId"`
+	ScopeID    string             `json:"scopeId"`
 	Online     bool               `json:"online"`
 	LastSeenAt time.Time          `json:"lastSeenAt"`
 	Metrics    map[string]float64 `json:"metrics"`
@@ -337,7 +339,6 @@ type TelemetryPoint struct {
 type Usage struct {
 	DeviceTotal int64 `json:"deviceTotal"`
 	DeviceMax   int   `json:"deviceMax"`
-	SpaceTotal  int64 `json:"spaceTotal"`
 }
 
 // AuditEvent is one audit-trail row.

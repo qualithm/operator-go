@@ -7,21 +7,21 @@ import (
 )
 
 // CreateAutomationInput is the request body for [Client.CreateAutomation].
-// A nil SpaceID creates a team-wide automation.
+// A nil ScopeID creates a team-wide automation.
 type CreateAutomationInput struct {
 	Name    string            `json:"name"`
-	SpaceID *string           `json:"spaceId,omitempty"`
+	ScopeID *string           `json:"scopeId,omitempty"`
 	Payload AutomationPayload `json:"payload"`
 }
 
 // UpdateAutomationInput is the request body for [Client.UpdateAutomation].
 // Nil fields are left unchanged. Template/Params and Payload are mutually
 // exclusive: setting Template re-expands the chain server-side from the
-// template; the API does not accept clearing the space through this client.
+// template; the API does not accept clearing the scope through this client.
 type UpdateAutomationInput struct {
 	Name     string             `json:"name,omitempty"`
 	Enabled  *bool              `json:"enabled,omitempty"`
-	SpaceID  *string            `json:"spaceId,omitempty"`
+	ScopeID  *string            `json:"scopeId,omitempty"`
 	Payload  *AutomationPayload `json:"payload,omitempty"`
 	Template string             `json:"template,omitempty"`
 	Params   map[string]any     `json:"params,omitempty"`
@@ -76,7 +76,7 @@ func (c *Client) GetAutomation(ctx context.Context, automationID string) (Automa
 	return out, err
 }
 
-// UpdateAutomation updates an automation's name, space, payload, or template
+// UpdateAutomation updates an automation's name, scope, payload, or template
 // params. This endpoint returns no resource body.
 func (c *Client) UpdateAutomation(ctx context.Context, automationID string, in UpdateAutomationInput) error {
 	return c.do(ctx, http.MethodPatch, fmt.Sprintf("{team}/automations/%s", automationID), in, nil)

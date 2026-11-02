@@ -8,7 +8,7 @@ import (
 
 // CreateEnrollmentInput is the request body for [Client.CreateEnrollment].
 type CreateEnrollmentInput struct {
-	SpaceID string `json:"spaceId"`
+	ScopeID string `json:"scopeId"`
 	Label   string `json:"label,omitempty"`
 	// ExpiresInMinutes defaults to 1440 (24h) server-side; range 1–525600.
 	ExpiresInMinutes int `json:"expiresInMinutes,omitempty"`

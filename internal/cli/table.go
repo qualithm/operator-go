@@ -20,6 +20,14 @@ func dash(s string) string {
 	return s
 }
 
+// dashPtr renders a nil or empty string as "-".
+func dashPtr(s *string) string {
+	if s == nil {
+		return "-"
+	}
+	return dash(*s)
+}
+
 // when renders a time for a table: RFC 3339 in UTC, or "-" when unset.
 func when(t time.Time) string {
 	if t.IsZero() {

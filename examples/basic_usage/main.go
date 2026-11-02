@@ -43,6 +43,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("  %s\t%s\t(space %s)\n", d.ID, d.Name, d.SpaceID)
+		fmt.Printf("  %s\t%s\t(scope %s)\n", d.ID, d.Name, d.ScopeID)
 	}
 }
