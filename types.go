@@ -102,6 +102,23 @@ type Device struct {
 	Level string `json:"level,omitempty"`
 	// Checks is what the platform can evidence about the device's credentials.
 	Checks []DeviceCheck `json:"checks,omitempty"`
+	// Decisions is the claim's receipt: each default the platform chose for
+	// the device, where it is held and the docs page that explains it.
+	Decisions []Decision `json:"decisions,omitempty"`
+}
+
+// Decision is one default the platform chose when the device was claimed.
+type Decision struct {
+	// Key identifies the decision, e.g. "zone".
+	Key string `json:"key"`
+	// Label names it for people, e.g. "Zone".
+	Label string `json:"label"`
+	// Value is the value chosen, as its source holds it.
+	Value string `json:"value"`
+	// Source is where the value is held, e.g. "scope" or "credential".
+	Source string `json:"source"`
+	// DocsURL is the docs page that explains the default.
+	DocsURL string `json:"docsUrl"`
 }
 
 // DeviceCheck is one check behind a device's level.
