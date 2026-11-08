@@ -133,7 +133,6 @@ func credentialRotate(ctx context.Context, env Env, args []string) int {
 	cf := addCommon(fs)
 	device := fs.String("device", "", "device id (required)")
 	credential := fs.String("credential", "", "credential id to rotate (required)")
-	label := fs.String("label", "", "new credential label")
 	expires := fs.String("expires-at", "", "expiry time, RFC 3339")
 	revoke := fs.Bool("revoke", false, "revoke the old credential immediately")
 	if code := parseNone(env, fs, args); code >= 0 {
@@ -151,8 +150,7 @@ func credentialRotate(ctx context.Context, env Env, args []string) int {
 	if code >= 0 {
 		return code
 	}
-	res, err := client.RotateCredential(ctx, *device, *credential, operator.MintCredentialInput{
-		Label:     *label,
+	res, err := client.RotateCredential(ctx, *device, *credential, operator.RotateCredentialInput{
 		ExpiresAt: expiresAt,
 	}, *revoke)
 	return cf.report(env, res, func(w io.Writer) {

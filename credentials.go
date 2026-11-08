@@ -15,6 +15,13 @@ type MintCredentialInput struct {
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 }
 
+// RotateCredentialInput is the request body for [Client.RotateCredential].
+// The new credential keeps the rotated one's label.
+type RotateCredentialInput struct {
+	// ExpiresAt is an optional ISO 8601 timestamp in the future.
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+}
+
 // IssueCertInput is the request body for [Client.IssueCert].
 type IssueCertInput struct {
 	CSRPEM string `json:"csrPem"`
@@ -48,7 +55,7 @@ func (c *Client) IssueCert(ctx context.Context, deviceID string, in IssueCertInp
 // RotateCredential rotates a token credential. When revoke is true the old
 // credential is revoked immediately; otherwise it stays active so the device
 // can finish swapping. The returned Secret is shown exactly once.
-func (c *Client) RotateCredential(ctx context.Context, deviceID, credentialID string, in MintCredentialInput, revoke bool) (CredentialWithSecret, error) {
+func (c *Client) RotateCredential(ctx context.Context, deviceID, credentialID string, in RotateCredentialInput, revoke bool) (CredentialWithSecret, error) {
 	path := fmt.Sprintf("{team}/devices/%s/credentials/%s/rotate", deviceID, credentialID)
 	if revoke {
 		path += "?revoke=true"

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 // recorder captures the most recent request a method issued.
@@ -122,7 +123,7 @@ func TestIssueCert(t *testing.T) {
 func TestRotateCredentialRevokeQuery(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"credential":{"id":"cred_2","rotatedFrom":"cred_1"},"secret":"qmd_x"}}`, &rec)
-	got, err := c.RotateCredential(context.Background(), "dev_1", "cred_1", MintCredentialInput{Label: "next"}, true)
+	got, err := c.RotateCredential(context.Background(), "dev_1", "cred_1", RotateCredentialInput{}, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,11 +138,25 @@ func TestRotateCredentialRevokeQuery(t *testing.T) {
 func TestRotateCredentialNoRevoke(t *testing.T) {
 	var rec recorder
 	c := recClient(t, 200, `{"data":{"credential":{"id":"cred_2"},"secret":"qmd_x"}}`, &rec)
-	if _, err := c.RotateCredential(context.Background(), "dev_1", "cred_1", MintCredentialInput{}, false); err != nil {
+	if _, err := c.RotateCredential(context.Background(), "dev_1", "cred_1", RotateCredentialInput{}, false); err != nil {
 		t.Fatal(err)
 	}
 	if rec.query != "" {
 		t.Fatalf("query = %q, want empty", rec.query)
+	}
+}
+
+// The rotate endpoint takes only an expiry, and platform refuses unknown body
+// fields, so the body carries nothing else.
+func TestRotateCredentialSendsOnlyExpiry(t *testing.T) {
+	var rec recorder
+	c := recClient(t, 200, `{"data":{"credential":{"id":"cred_2"},"secret":"qmd_x"}}`, &rec)
+	at := time.Date(2027, 12, 31, 0, 0, 0, 0, time.UTC)
+	if _, err := c.RotateCredential(context.Background(), "dev_1", "cred_1", RotateCredentialInput{ExpiresAt: &at}, false); err != nil {
+		t.Fatal(err)
+	}
+	if len(rec.body) != 1 || rec.body["expiresAt"] != "2027-12-31T00:00:00Z" {
+		t.Fatalf("body = %+v, want only expiresAt", rec.body)
 	}
 }
 
