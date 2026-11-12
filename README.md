@@ -175,8 +175,8 @@ func main() {
 }
 ```
 
-Every `List` method takes a cursor: empty for the first page, then the previous page's
-`NextCursor`. `operator.All` walks a list to its end.
+Every `List` method takes a cursor: empty for the first page, then the previous page's `NextCursor`.
+`operator.All` walks a list to its end.
 
 Enable a dry-run at construction so mutating calls return a `*operator.DryRunError` instead of
 sending:
