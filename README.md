@@ -46,13 +46,13 @@ export QUALITHM_API_TOKEN=qmt_...
 qualithm device list
 
 # create a time-boxed enrollment code for a scope
-qualithm enrollment create --scope spc_123 --label lab-floor-2
+qualithm enrollment create --scope scp_defraa_123 --label lab-floor-2
 
 # mint a device credential, machine-readable
-qualithm credential mint --device dev_123 --json
+qualithm credential mint --device dvc_defraa_123 --json
 
 # preview a revoke without applying it
-qualithm credential revoke --device dev_123 --credential cred_123 --dry-run
+qualithm credential revoke --device dvc_defraa_123 --credential crd_defraa_123 --dry-run
 ```
 
 Every verb accepts the global flags, before or after its positional arguments:
@@ -84,19 +84,19 @@ Every verb accepts the global flags, before or after its positional arguments:
 
 ```bash
 # devices
-qualithm device list --scope spc_123 --json
-qualithm device get dev_123
-qualithm device create --scope spc_123
-qualithm device update dev_123 --name gateway-01
+qualithm device list --scope scp_defraa_123 --json
+qualithm device get dvc_defraa_123
+qualithm device create --scope scp_defraa_123
+qualithm device update dvc_defraa_123 --name gateway-01
 
 # scopes: top-level in a zone, or nested under a parent
 qualithm scope create --name factory --zone de-fra-a
-qualithm scope create --name line-1 --parent spc_123
+qualithm scope create --name line-1 --parent scp_defraa_123
 
 # credentials (one-time secrets are printed once, on create)
-qualithm credential mint --device dev_123 --label rotate-2027 --expires-at 2027-12-31T00:00:00Z
-qualithm credential cert --device dev_123 --csr-file device.csr --expires-days 90
-qualithm credential rotate --device dev_123 --credential cred_123 --revoke
+qualithm credential mint --device dvc_defraa_123 --label rotate-2027 --expires-at 2027-12-31T00:00:00Z
+qualithm credential cert --device dvc_defraa_123 --csr-file device.csr --expires-days 90
+qualithm credential rotate --device dvc_defraa_123 --credential crd_defraa_123 --revoke
 
 # api tokens (create them in the app; the CLI lists and revokes)
 qualithm token list
@@ -113,7 +113,7 @@ and leaving existing ones untouched. Combine with `--dry-run` to preview.
 ```yaml
 # fleet.yaml
 scopes:
-  - id: spc_123
+  - id: scp_defraa_123
     devices:
       - name: gateway-01
       - name: gateway-02
