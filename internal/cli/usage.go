@@ -22,9 +22,9 @@ Resources and verbs:
   version                               print the CLI version
 
 Examples:
-  qualithm enrollment create --scope spc_123 --label lab-floor-2
-  qualithm credential mint --device dev_123 --json
-  qualithm credential revoke --device dev_123 --credential cred_123 --dry-run
+  qualithm enrollment create --scope scp_defraa_123 --label lab-floor-2
+  qualithm credential mint --device dvc_defraa_123 --json
+  qualithm credential revoke --device dvc_defraa_123 --credential crd_defraa_123 --dry-run
   qualithm device list --json
   qualithm apply fleet.yaml --dry-run
 
