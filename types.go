@@ -204,12 +204,52 @@ type Member struct {
 	AccountID    string    `json:"accountId"`
 	TeamID       string    `json:"teamId"`
 	Role         string    `json:"role"`   // "owner" | "manager" | "viewer"
-	Status       string    `json:"status"` // "active" | "invited"
+	Status       string    `json:"status"` // "active"
 	AccountEmail string    `json:"accountEmail"`
 	AccountName  string    `json:"accountName"`
 	TeamName     string    `json:"teamName"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// Membership is a membership row without the account and team context.
+type Membership struct {
+	ID        string    `json:"id"`
+	AccountID string    `json:"accountId"`
+	TeamID    string    `json:"teamId"`
+	Role      string    `json:"role"`   // "owner" | "manager" | "viewer"
+	Status    string    `json:"status"` // "invited" | "active" | "revoked" | "declined"
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// TeamInvite is a pending invite to a team, addressed to an email. Only the
+// account with that email can accept it.
+type TeamInvite struct {
+	ID          string    `json:"id"`
+	TeamID      string    `json:"teamId"`
+	TeamName    string    `json:"teamName"`
+	Email       string    `json:"email"`
+	Role        string    `json:"role"` // "owner" | "manager" | "viewer"
+	InvitedBy   *string   `json:"invitedBy"`
+	InviterName *string   `json:"inviterName"`
+	ExpiresAt   time.Time `json:"expiresAt"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// TeamInviteResult is what inviting one address did.
+type TeamInviteResult struct {
+	Email  string      `json:"email"`
+	Result string      `json:"result"` // "sent" | "already_member" | "already_invited"
+	Invite *TeamInvite `json:"invite"` // nil when the address is already a member
+}
+
+// InviteLink is the invite a link token names, and whether the caller may
+// accept it.
+type InviteLink struct {
+	Invite    TeamInvite `json:"invite"`
+	ForCaller bool       `json:"forCaller"`
 }
 
 // AutomationTrigger is the firing condition of an automation.

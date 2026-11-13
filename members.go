@@ -19,8 +19,20 @@ type UpdateTeamMemberInput struct {
 
 // CreateTeamInviteInput is the request body for [Client.CreateTeamInvite].
 type CreateTeamInviteInput struct {
-	Email string `json:"email"`
-	Role  string `json:"role"` // "owner" | "manager" | "viewer"
+	Emails []string `json:"emails"`
+	Role   string   `json:"role"` // "owner" | "manager" | "viewer"
+}
+
+// TeamInviteResults is what [Client.CreateTeamInvite] did, one result per
+// address in the order given.
+type TeamInviteResults struct {
+	Items []TeamInviteResult `json:"items"`
+}
+
+// inviteTokenInput is the request body for [Client.LookupInvite] and
+// [Client.AcceptInvite].
+type inviteTokenInput struct {
+	Token string `json:"token"`
 }
 
 // ListTeamMembers returns a page of active members of the team.
@@ -30,9 +42,10 @@ func (c *Client) ListTeamMembers(ctx context.Context, teamID string, cursor stri
 	return out, err
 }
 
-// AddTeamMember activates the caller's invited membership from an invite ID.
-func (c *Client) AddTeamMember(ctx context.Context, teamID string, in AddTeamMemberInput) (Member, error) {
-	var out Member
+// AddTeamMember accepts an invite by its ID. Only the account whose email the
+// invite names can accept it.
+func (c *Client) AddTeamMember(ctx context.Context, teamID string, in AddTeamMemberInput) (Membership, error) {
+	var out Membership
 	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/v1/teams/%s/members", teamID), in, &out)
 	return out, err
 }
@@ -55,21 +68,46 @@ func (c *Client) RemoveTeamMember(ctx context.Context, teamID, memberID string) 
 	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/v1/teams/%s/members/%s", teamID, memberID), nil, nil)
 }
 
-// ListTeamInvites returns a page of pending invitations to the team.
-func (c *Client) ListTeamInvites(ctx context.Context, teamID string, cursor string, limit int) (Page[Member], error) {
-	var out Page[Member]
+// ListTeamInvites returns a page of pending invites to the team.
+func (c *Client) ListTeamInvites(ctx context.Context, teamID string, cursor string, limit int) (Page[TeamInvite], error) {
+	var out Page[TeamInvite]
 	err := c.do(ctx, http.MethodGet, fmt.Sprintf("/v1/teams/%s/invites", teamID)+pageQuery(cursor, limit), nil, &out)
 	return out, err
 }
 
-// CreateTeamInvite invites an account to the team by email.
-func (c *Client) CreateTeamInvite(ctx context.Context, teamID string, in CreateTeamInviteInput) (Member, error) {
-	var out Member
+// CreateTeamInvite invites email addresses to the team with one role. Each
+// address gets its own result: sent, already a member, or already invited.
+func (c *Client) CreateTeamInvite(ctx context.Context, teamID string, in CreateTeamInviteInput) (TeamInviteResults, error) {
+	var out TeamInviteResults
 	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/v1/teams/%s/invites", teamID), in, &out)
 	return out, err
 }
 
-// RevokeTeamInvite revokes a pending invitation.
+// ResendTeamInvite mails a pending invite again with a new link; the old link
+// stops working.
+func (c *Client) ResendTeamInvite(ctx context.Context, teamID, inviteID string) (TeamInvite, error) {
+	var out TeamInvite
+	err := c.do(ctx, http.MethodPost, fmt.Sprintf("/v1/teams/%s/invites/%s/resend", teamID, inviteID), nil, &out)
+	return out, err
+}
+
+// RevokeTeamInvite withdraws a pending invite.
 func (c *Client) RevokeTeamInvite(ctx context.Context, teamID, inviteID string) error {
 	return c.do(ctx, http.MethodDelete, fmt.Sprintf("/v1/teams/%s/invites/%s", teamID, inviteID), nil, nil)
+}
+
+// LookupInvite returns the invite a link token names, and whether the caller
+// may accept it.
+func (c *Client) LookupInvite(ctx context.Context, token string) (InviteLink, error) {
+	var out InviteLink
+	err := c.do(ctx, http.MethodPost, "/v1/invites/lookup", inviteTokenInput{Token: token}, &out)
+	return out, err
+}
+
+// AcceptInvite accepts the invite a link token names. Only the account whose
+// email the invite names can accept it.
+func (c *Client) AcceptInvite(ctx context.Context, token string) (Membership, error) {
+	var out Membership
+	err := c.do(ctx, http.MethodPost, "/v1/invites/accept", inviteTokenInput{Token: token}, &out)
+	return out, err
 }
