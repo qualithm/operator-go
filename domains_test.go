@@ -86,12 +86,12 @@ func TestMembers(t *testing.T) {
 	}
 
 	c = recClient(t, 201, `{"data":{"id":"mem_2","status":"active"}}`, &rec)
-	m, err := c.AddTeamMember(context.Background(), "team_1", AddTeamMemberInput{InviteID: "inv_9"})
+	m, err := c.AddTeamMember(context.Background(), "team_1", AddTeamMemberInput{InviteID: "ivt_9"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodPost || rec.body["inviteId"] != "inv_9" || m.Status != "active" {
-		t.Fatalf("request = %s body=%v member=%+v", rec.method, rec.body, m)
+	if rec.method != http.MethodPost || rec.body["inviteId"] != "ivt_9" || m.Status != "active" {
+		t.Fatalf("request = %s body=%v membership=%+v", rec.method, rec.body, m)
 	}
 
 	c = recClient(t, 200, `{"data":{"id":"mem_1"}}`, &rec)
@@ -118,30 +118,61 @@ func TestMembers(t *testing.T) {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
 	}
 
-	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"mem_3","status":"invited"}],"last":1}}`, &rec)
+	c = recClient(t, 200, `{"data":{"current":1,"items":[{"id":"ivt_3","email":"a@b.c","invitedBy":null}],"last":1}}`, &rec)
 	invites, err := c.ListTeamInvites(context.Background(), "team_1", "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.path != "/v1/teams/team_1/invites" || len(invites.Items) != 1 {
+	if rec.path != "/v1/teams/team_1/invites" || len(invites.Items) != 1 || invites.Items[0].Email != "a@b.c" || invites.Items[0].InvitedBy != nil {
 		t.Fatalf("path = %q invites = %+v", rec.path, invites)
 	}
 
-	c = recClient(t, 201, `{"data":{"id":"mem_4","status":"invited"}}`, &rec)
-	inv, err := c.CreateTeamInvite(context.Background(), "team_1", CreateTeamInviteInput{Email: "a@b.c", Role: "viewer"})
+	c = recClient(t, 200, `{"data":{"items":[{"email":"a@b.c","result":"sent","invite":{"id":"ivt_4"}},{"email":"d@e.f","result":"already_member","invite":null}]}}`, &rec)
+	res, err := c.CreateTeamInvite(context.Background(), "team_1", CreateTeamInviteInput{Emails: []string{"a@b.c", "d@e.f"}, Role: "viewer"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec.body["email"] != "a@b.c" || rec.body["role"] != "viewer" || inv.ID != "mem_4" {
-		t.Fatalf("body=%v invite=%+v", rec.body, inv)
+	emails, _ := rec.body["emails"].([]any)
+	if len(emails) != 2 || emails[0] != "a@b.c" || rec.body["role"] != "viewer" {
+		t.Fatalf("body=%v", rec.body)
+	}
+	if len(res.Items) != 2 || res.Items[0].Invite == nil || res.Items[0].Invite.ID != "ivt_4" || res.Items[1].Result != "already_member" || res.Items[1].Invite != nil {
+		t.Fatalf("results = %+v", res)
+	}
+
+	c = recClient(t, 200, `{"data":{"id":"ivt_4","email":"a@b.c"}}`, &rec)
+	inv, err := c.ResendTeamInvite(context.Background(), "team_1", "ivt_4")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.method != http.MethodPost || rec.path != "/v1/teams/team_1/invites/ivt_4/resend" || inv.ID != "ivt_4" {
+		t.Fatalf("request = %s %s invite=%+v", rec.method, rec.path, inv)
 	}
 
 	c = recClient(t, 200, `{"message":"ok"}`, &rec)
-	if err := c.RevokeTeamInvite(context.Background(), "team_1", "mem_4"); err != nil {
+	if err := c.RevokeTeamInvite(context.Background(), "team_1", "ivt_4"); err != nil {
 		t.Fatal(err)
 	}
-	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/invites/mem_4" {
+	if rec.method != http.MethodDelete || rec.path != "/v1/teams/team_1/invites/ivt_4" {
 		t.Fatalf("request = %s %s", rec.method, rec.path)
+	}
+
+	c = recClient(t, 200, `{"data":{"invite":{"id":"ivt_5","teamName":"Kitchen"},"forCaller":true}}`, &rec)
+	link, err := c.LookupInvite(context.Background(), "qmi_abc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.method != http.MethodPost || rec.path != "/v1/invites/lookup" || rec.body["token"] != "qmi_abc" || !link.ForCaller || link.Invite.ID != "ivt_5" {
+		t.Fatalf("request = %s %s body=%v link=%+v", rec.method, rec.path, rec.body, link)
+	}
+
+	c = recClient(t, 201, `{"data":{"id":"mem_6","status":"active"}}`, &rec)
+	ms, err := c.AcceptInvite(context.Background(), "qmi_abc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.path != "/v1/invites/accept" || rec.body["token"] != "qmi_abc" || ms.ID != "mem_6" {
+		t.Fatalf("request = %s body=%v membership=%+v", rec.path, rec.body, ms)
 	}
 }
 
