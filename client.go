@@ -222,11 +222,25 @@ func (c *Client) do(ctx context.Context, method, path string, body, out any) err
 // authenticates with an automation trigger secret rather than the member API
 // token; every other route passes an empty override.
 func (c *Client) doAuth(ctx context.Context, method, path string, body, out any, bearerOverride string) error {
+	return c.send(ctx, method, path, body, out, requestOptions{bearer: bearerOverride})
+}
+
+// requestOptions adjusts one request. bearer overrides the API token;
+// readOnly lets a POST that changes nothing through dry-run mode;
+// noIdempotencyKey sends a POST without an Idempotency-Key, for routes that
+// don't replay.
+type requestOptions struct {
+	bearer           string
+	readOnly         bool
+	noIdempotencyKey bool
+}
+
+func (c *Client) send(ctx context.Context, method, path string, body, out any, opts requestOptions) error {
 	path, err := c.resolvePath(ctx, path)
 	if err != nil {
 		return err
 	}
-	if c.mutating(method) {
+	if c.mutating(method) && !opts.readOnly {
 		action := Action{Method: method, Path: path, Body: body}
 		if c.recorder != nil {
 			c.recorder(action)
@@ -250,8 +264,8 @@ func (c *Client) doAuth(ctx context.Context, method, path string, body, out any,
 		return fmt.Errorf("operator: build request: %w", err)
 	}
 	bearer := c.token
-	if bearerOverride != "" {
-		bearer = bearerOverride
+	if opts.bearer != "" {
+		bearer = opts.bearer
 	}
 	req.Header.Set("Authorization", "Bearer "+bearer)
 	req.Header.Set("Accept", "application/json")
@@ -261,7 +275,7 @@ func (c *Client) doAuth(ctx context.Context, method, path string, body, out any,
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	if method == http.MethodPost {
+	if method == http.MethodPost && !opts.noIdempotencyKey {
 		key, err := idempotencyKey(ctx)
 		if err != nil {
 			return err
