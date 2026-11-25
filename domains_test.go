@@ -282,6 +282,15 @@ func TestAutomations(t *testing.T) {
 		t.Fatalf("path = %q tmpls = %+v", rec.path, tmpls)
 	}
 
+	c = recClient(t, 200, `{"data":[{"id":"tmpl_1","name":"Alert","needs":["sensor"],"usable":true,"devices":["dev_1"]}]}`, &rec)
+	team, err := c.ListTeamAutomationTemplates(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.path != "/v1/teams/team_1/automation-templates" || len(team) != 1 || team[0].Name != "Alert" || team[0].Needs[0] != "sensor" || !team[0].Usable || team[0].Devices[0] != "dev_1" {
+		t.Fatalf("path = %q team = %+v", rec.path, team)
+	}
+
 	c = recClient(t, 200, `{"data":{"url":"https://x","secret":"s3cr3t"}}`, &rec)
 	issued, err := c.CreateAutomationTriggerSecret(context.Background(), "auto_2")
 	if err != nil {
