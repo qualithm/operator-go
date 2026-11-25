@@ -327,6 +327,15 @@ type AutomationTemplate struct {
 	Slots       []AutomationTemplateSlot `json:"slots"`
 }
 
+// TeamAutomationTemplate is one catalogue entry as the team sees it: what the
+// template needs, and which of the team's devices can use it.
+type TeamAutomationTemplate struct {
+	AutomationTemplate
+	Needs   []string `json:"needs"` // "sensor" | "control" | "schedule" | "webhook"
+	Usable  bool     `json:"usable"`
+	Devices []string `json:"devices"`
+}
+
 // AutomationTemplateSlot names one typed parameter a template accepts.
 type AutomationTemplateSlot struct {
 	Name string `json:"name"`

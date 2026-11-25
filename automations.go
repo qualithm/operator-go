@@ -133,6 +133,14 @@ func (c *Client) ListAutomationTemplates(ctx context.Context, deviceID string) (
 	return out, err
 }
 
+// ListTeamAutomationTemplates returns the whole automation template catalogue,
+// each entry with what it needs and which of the team's devices can use it.
+func (c *Client) ListTeamAutomationTemplates(ctx context.Context) ([]TeamAutomationTemplate, error) {
+	var out []TeamAutomationTemplate
+	err := c.do(ctx, http.MethodGet, "{team}/automation-templates", nil, &out)
+	return out, err
+}
+
 // TriggerAutomation fires an automation's webhook trigger. Unlike every other
 // method, it authenticates with the automation's trigger secret (issued by
 // [Client.CreateAutomationTriggerSecret]), not the member API token. The
